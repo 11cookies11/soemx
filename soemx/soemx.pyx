@@ -60,6 +60,8 @@ cdef extern from "soem/soem.h":
                   int *psize, void *p, int timeout) noexcept nogil
     int ecx_readPDOmap(ecx_contextt *context, uint16_t slave,
                        uint32_t *output_size, uint32_t *input_size)
+    int ecx_readPDOmapCA(ecx_contextt *context, uint16_t slave, int thread,
+                         uint32_t *output_size, uint32_t *input_size)
     int ecx_readIDNmap(ecx_contextt *context, uint16_t slave,
                        uint32_t *output_size, uint32_t *input_size)
     int ecx_EOEsend(ecx_contextt *context, uint16_t slave, unsigned char port,
@@ -1155,14 +1157,21 @@ cdef class Slave:
             raise RuntimeError("TxPDO read failed")
         return bytes(buffer[:actual_size])
 
-    def read_pdo_map(self):
-        """Return mapped output and input sizes in bits."""
+    def read_pdo_map(self, complete_access: bool = False, thread: int = 0):
+        """Return PDO mapping sizes in bits, optionally using Complete Access."""
         if not self._master._open:
             raise RuntimeError("master is not open")
         cdef uint32_t output_size = 0
         cdef uint32_t input_size = 0
-        if ecx_readPDOmap(self._master._context, self._index,
-                          &output_size, &input_size) <= 0:
+        if complete_access:
+            if thread < 0:
+                raise ValueError("thread must be non-negative")
+            result = ecx_readPDOmapCA(self._master._context, self._index,
+                                      thread, &output_size, &input_size)
+        else:
+            result = ecx_readPDOmap(self._master._context, self._index,
+                                    &output_size, &input_size)
+        if result <= 0:
             raise RuntimeError("PDO map read failed")
         return {"outputs": output_size, "inputs": input_size}
 
