@@ -10,6 +10,9 @@ void soemx_redport_destroy(ecx_redportt *redport);
 int soemx_init_redundant(ecx_contextt *context, ecx_redportt *redport,
                          const char *ifname, const char *ifname2);
 int soemx_slave_count(ecx_contextt *context);
+unsigned short soemx_expected_wkc(ecx_contextt *context);
+unsigned short soemx_master_state(ecx_contextt *context);
+void soemx_set_master_state(ecx_contextt *context, unsigned short state);
 const char *soemx_slave_name(ecx_contextt *context, int slave);
 unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave);
 unsigned int soemx_slave_id(ecx_contextt *context, int slave);

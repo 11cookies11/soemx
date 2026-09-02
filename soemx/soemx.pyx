@@ -69,6 +69,9 @@ cdef extern from "soem/soem.h":
 cdef extern from "soemx_native.h":
     ecx_contextt *soemx_context_create()
     void soemx_context_destroy(ecx_contextt *context)
+    unsigned short soemx_expected_wkc(ecx_contextt *context)
+    unsigned short soemx_master_state(ecx_contextt *context)
+    void soemx_set_master_state(ecx_contextt *context, unsigned short state)
     ecx_redportt *soemx_redport_create()
     void soemx_redport_destroy(ecx_redportt *redport)
     int soemx_init_redundant(ecx_contextt *context, ecx_redportt *redport,
@@ -127,11 +130,15 @@ cdef class Master:
     cdef bint _open
     cdef object _io_map
     cdef object _setup_func
+    cdef bint _in_op
+    cdef bint _do_check_state
 
     def __cinit__(self):
         self._context = soemx_context_create()
         self._redport = soemx_redport_create()
         self._setup_func = None
+        self._in_op = False
+        self._do_check_state = False
         if self._context == NULL or self._redport == NULL:
             raise MemoryError("unable to allocate SOEM context")
 
@@ -529,6 +536,36 @@ cdef class Master:
     @property
     def slave_count(self) -> int:
         return soemx_slave_count(self._context)
+
+    @property
+    def expected_wkc(self):
+        return soemx_expected_wkc(self._context)
+
+    @property
+    def state(self):
+        return soemx_master_state(self._context)
+
+    @state.setter
+    def state(self, value: int):
+        if not 0 <= value <= 0xffff:
+            raise ValueError("invalid state")
+        soemx_set_master_state(self._context, <unsigned short>value)
+
+    @property
+    def in_op(self):
+        return bool(self._in_op)
+
+    @in_op.setter
+    def in_op(self, value):
+        self._in_op = bool(value)
+
+    @property
+    def do_check_state(self):
+        return bool(self._do_check_state)
+
+    @do_check_state.setter
+    def do_check_state(self, value):
+        self._do_check_state = bool(value)
 
     def slave(self, index: int):
         if index < 1 or index > self.slave_count:

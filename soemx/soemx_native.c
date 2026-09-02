@@ -29,6 +29,9 @@ int soemx_init_redundant(ecx_contextt *context, ecx_redportt *redport,
 }
 
 int soemx_slave_count(ecx_contextt *context) { return context ? context->slavecount : 0; }
+unsigned short soemx_expected_wkc(ecx_contextt *context) { return context ? context->grouplist[0].outputsWKC * 2 + context->grouplist[0].inputsWKC : 0; }
+unsigned short soemx_master_state(ecx_contextt *context) { return context ? context->slavelist[0].state : 0; }
+void soemx_set_master_state(ecx_contextt *context, unsigned short state) { if (context) context->slavelist[0].state = state; }
 const char *soemx_slave_name(ecx_contextt *context, int slave) { return context->slavelist[slave].name; }
 unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_man; }
 unsigned int soemx_slave_id(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_id; }
