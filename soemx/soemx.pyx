@@ -72,6 +72,8 @@ cdef extern from "soemx_native.h":
                             int entry, unsigned char *value_info,
                             unsigned short *datatype, unsigned short *bit_length,
                             unsigned short *access, char *name, int name_capacity)
+    void soemx_set_overlapped(ecx_contextt *context, int enabled)
+    void soemx_set_packed(ecx_contextt *context, int enabled)
 
 
 cdef class Master:
@@ -129,6 +131,23 @@ cdef class Master:
         self._io_map = bytearray(size)
         cdef char *io_ptr = self._io_map
         return ecx_config_map_group(self._context, <void *>io_ptr, <unsigned char>group)
+
+    def config_overlap_map(self, size: int = 65536, group: int = 0) -> int:
+        """Configure an overlapped PDO map, matching PySOEM's API."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if size <= 0 or group < 0 or group > 255:
+            raise ValueError("invalid IO map size or group")
+        self._io_map = bytearray(size)
+        soemx_set_overlapped(self._context, 1)
+        cdef char *io_ptr = self._io_map
+        return ecx_config_map_group(self._context, <void *>io_ptr, <unsigned char>group)
+
+    def set_packed_map(self, enabled: bool = True):
+        """Enable or disable byte-packed PDO mapping before config_map()."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        soemx_set_packed(self._context, 1 if enabled else 0)
 
     def read_eeprom(self, slave: int, address: int, timeout: int = 20_000) -> int:
         if not self._open:

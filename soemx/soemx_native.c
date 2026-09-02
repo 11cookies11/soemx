@@ -87,3 +87,13 @@ int soemx_read_oe_entry(ecx_contextt *context, unsigned short slave, int object,
     strncpy_s(name, (size_t)name_capacity, oe.Name[entry], _TRUNCATE);
     return oe.Entries;
 }
+
+void soemx_set_overlapped(ecx_contextt *context, int enabled)
+{
+    if (context) context->overlappedMode = enabled ? TRUE : FALSE;
+}
+
+void soemx_set_packed(ecx_contextt *context, int enabled)
+{
+    if (context) context->packedMode = enabled ? TRUE : FALSE;
+}

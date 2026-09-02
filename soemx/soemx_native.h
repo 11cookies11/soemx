@@ -25,3 +25,5 @@ int soemx_read_oe_entry(ecx_contextt *context, unsigned short slave, int object,
                         int entry, unsigned char *value_info,
                         unsigned short *datatype, unsigned short *bit_length,
                         unsigned short *access, char *name, int name_capacity);
+void soemx_set_overlapped(ecx_contextt *context, int enabled);
+void soemx_set_packed(ecx_contextt *context, int enabled);
