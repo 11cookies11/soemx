@@ -737,6 +737,46 @@ cdef class Slave:
         return self.has_dc
 
     @property
+    def man(self):
+        return self.manufacturer
+
+    @property
+    def rev(self):
+        return self.revision
+
+    def eeprom_read(self, word_address: int, timeout: int = 20_000):
+        value = self._master.read_eeprom(self._index, word_address, timeout)
+        return int(value).to_bytes(4, "little")
+
+    def eeprom_write(self, word_address: int, data: bytes,
+                     timeout: int = 20_000) -> int:
+        if not isinstance(data, bytes) or len(data) != 2:
+            raise ValueError("EEPROM write data must contain exactly two bytes")
+        return self._master.write_eeprom(self._index, word_address,
+                                         int.from_bytes(data, "little"), timeout)
+
+    def recover(self, timeout: int = 500) -> int:
+        return self._master.recover_slave(self._index, timeout)
+
+    def reconfig(self, timeout: int = 500) -> int:
+        return self._master.reconfig_slave(self._index, timeout)
+
+    def state_check(self, state: int, timeout: int = 2_000_000) -> int:
+        return self._master.state_check(state, self._index, timeout)
+
+    def write_state(self) -> int:
+        return self._master.write_state(self._index)
+
+    def dc_sync(self, active: bool, sync0_cycle_time: int,
+                sync0_shift_time: int = 0, sync1_cycle_time=None):
+        if sync1_cycle_time is None:
+            return self._master.dc_sync0(self._index, sync0_cycle_time,
+                                         active, sync0_shift_time)
+        return self._master.dc_sync01(self._index, sync0_cycle_time,
+                                      sync1_cycle_time, active,
+                                      sync0_shift_time)
+
+    @property
     def output_bits(self):
         return soemx_slave_obits(self._master._context, self._index)
 
