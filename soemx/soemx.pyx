@@ -7,9 +7,12 @@ cdef extern from "soem/soem.h":
     int ecx_init(ecx_contextt *context, const char *ifname)
     void ecx_close(ecx_contextt *context)
     int ecx_config_init(ecx_contextt *context)
+    int ecx_config_map_group(ecx_contextt *context, void *pIOmap, unsigned char group)
     int ecx_readstate(ecx_contextt *context)
     int ecx_writestate(ecx_contextt *context, uint16_t slave)
     uint16_t ecx_statecheck(ecx_contextt *context, uint16_t slave, uint16_t reqstate, int timeout)
+    int ecx_send_processdata(ecx_contextt *context) noexcept nogil
+    int ecx_receive_processdata(ecx_contextt *context, int timeout) noexcept nogil
     int ecx_SDOread(ecx_contextt *context, uint16_t slave, uint16_t index,
                     unsigned char subindex, unsigned char CA, int *psize,
                     void *p, int timeout) noexcept nogil
@@ -36,6 +39,7 @@ cdef extern from "soemx_native.h":
 cdef class Master:
     cdef ecx_contextt *_context
     cdef bint _open
+    cdef object _io_map
 
     def __cinit__(self):
         self._context = soemx_context_create()
@@ -66,6 +70,46 @@ cdef class Master:
         if not self._open:
             raise RuntimeError("master is not open")
         return ecx_config_init(self._context)
+
+    def config_map(self, size: int = 65536, group: int = 0) -> int:
+        """Map slave PDOs into an IO buffer and return mapped byte count."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if size <= 0 or group < 0 or group > 255:
+            raise ValueError("invalid IO map size or group")
+        self._io_map = bytearray(size)
+        cdef char *io_ptr = self._io_map
+        return ecx_config_map_group(self._context, <void *>io_ptr, <unsigned char>group)
+
+    @property
+    def io_map(self):
+        """Return a copy of the current process-data IO map."""
+        if self._io_map is None:
+            raise RuntimeError("PDO map has not been configured")
+        return bytes(self._io_map)
+
+    def write_io_map(self, data: bytes, offset: int = 0):
+        if self._io_map is None:
+            raise RuntimeError("PDO map has not been configured")
+        if offset < 0 or offset + len(data) > len(self._io_map):
+            raise ValueError("IO map write is out of range")
+        self._io_map[offset:offset + len(data)] = data
+
+    def send_processdata(self) -> int:
+        if not self._open or self._io_map is None:
+            raise RuntimeError("master is not open or PDO map is not configured")
+        return ecx_send_processdata(self._context)
+
+    def receive_processdata(self, timeout: int = 2_000_000) -> int:
+        if not self._open or self._io_map is None:
+            raise RuntimeError("master is not open or PDO map is not configured")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        cdef int timeout_us = timeout
+        cdef int result
+        with nogil:
+            result = ecx_receive_processdata(self._context, timeout_us)
+        return result
 
     def read_state(self) -> int:
         """Read the state of every configured slave; return slave count."""
