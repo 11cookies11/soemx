@@ -10,6 +10,12 @@ cdef extern from "soem/soem.h":
     int ecx_readstate(ecx_contextt *context)
     int ecx_writestate(ecx_contextt *context, uint16_t slave)
     uint16_t ecx_statecheck(ecx_contextt *context, uint16_t slave, uint16_t reqstate, int timeout)
+    int ecx_SDOread(ecx_contextt *context, uint16_t slave, uint16_t index,
+                    unsigned char subindex, unsigned char CA, int *psize,
+                    void *p, int timeout) noexcept nogil
+    int ecx_SDOwrite(ecx_contextt *context, uint16_t slave, uint16_t index,
+                     unsigned char subindex, unsigned char CA, int psize,
+                     const void *p, int timeout) noexcept nogil
     int ecx_EOEsend(ecx_contextt *context, uint16_t slave, unsigned char port,
                     int psize, void *p, int timeout) noexcept nogil
     int ecx_EOErecv(ecx_contextt *context, uint16_t slave, unsigned char port,
@@ -196,3 +202,54 @@ cdef class Slave:
 
     def eoe(self, port: int = 0):
         return self._master.eoe(self._index, port)
+
+    def sdo_read(self, index: int, subindex: int = 0, size: int = 1024,
+                 complete_access: bool = False, timeout: int = 20_000) -> bytes:
+        """Read an SDO and return its raw bytes."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if not 0 <= index <= 0xffff or not 0 <= subindex <= 0xff:
+            raise ValueError("invalid SDO index or subindex")
+        if size <= 0 or timeout <= 0:
+            raise ValueError("size and timeout must be positive")
+        buffer = bytearray(size)
+        cdef int actual_size = size
+        cdef char *buffer_ptr = buffer
+        cdef int timeout_ms = timeout
+        cdef uint16_t sdo_index = <uint16_t>index
+        cdef unsigned char sdo_subindex = <unsigned char>subindex
+        cdef unsigned char ca = <unsigned char>complete_access
+        cdef int result
+        with nogil:
+            result = ecx_SDOread(self._master._context, self._index,
+                                 sdo_index, sdo_subindex, ca, &actual_size,
+                                 <void *>buffer_ptr, timeout_ms)
+        if result <= 0:
+            raise RuntimeError("SDO read failed")
+        return bytes(buffer[:actual_size])
+
+    def sdo_write(self, index: int, data: bytes, subindex: int = 0,
+                  complete_access: bool = False, timeout: int = 20_000) -> int:
+        """Write raw bytes to an SDO and return SOEM's result code."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if not isinstance(data, bytes) or not data:
+            raise TypeError("data must be non-empty bytes")
+        if not 0 <= index <= 0xffff or not 0 <= subindex <= 0xff:
+            raise ValueError("invalid SDO index or subindex")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        cdef const char *data_ptr = data
+        cdef int data_size = len(data)
+        cdef int timeout_ms = timeout
+        cdef uint16_t sdo_index = <uint16_t>index
+        cdef unsigned char sdo_subindex = <unsigned char>subindex
+        cdef unsigned char ca = <unsigned char>complete_access
+        cdef int result
+        with nogil:
+            result = ecx_SDOwrite(self._master._context, self._index,
+                                  sdo_index, sdo_subindex, ca, data_size,
+                                  <const void *>data_ptr, timeout_ms)
+        if result <= 0:
+            raise RuntimeError("SDO write failed")
+        return result
