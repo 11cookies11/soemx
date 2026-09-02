@@ -13,9 +13,9 @@ sources += [str(soem / "osal" / "win32" / "osal.c"), str(soem / "oshw" / "win32"
 extension = Extension(
     "soemx._soemx",
     sources=sources,
-    include_dirs=[str(soem / "include"), str(soem / "osal"), str(soem / "osal" / "win32"), str(soem / "oshw" / "win32"), str(soem / "oshw" / "win32" / "wpcap" / "Include"), str(root / "soemx")],
+    include_dirs=[str(soem / "include"), str(soem / "build" / "include"), str(soem / "osal"), str(soem / "osal" / "win32"), str(soem / "oshw" / "win32"), str(soem / "oshw" / "win32" / "wpcap" / "Include"), str(root / "soemx")],
     library_dirs=[str(soem / "oshw" / "win32" / "wpcap" / "Lib" / "x64")],
-    libraries=["wpcap", "Packet"],
+    libraries=["wpcap", "Packet", "winmm", "ws2_32"],
 )
 
 setup(ext_modules=cythonize([extension], language_level=3))
