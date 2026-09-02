@@ -371,6 +371,11 @@ cdef class Master:
             raise IndexError("slave index out of range")
         return Slave(self, index)
 
+    @property
+    def slaves(self):
+        """Return configured slaves as a zero-based Python list."""
+        return [Slave(self, index) for index in range(1, self.slave_count + 1)]
+
     def eoe(self, slave: int, port: int = 0):
         """Return an EoE channel for a configured slave and mailbox port."""
         if not self._open:
