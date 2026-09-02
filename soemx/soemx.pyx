@@ -160,6 +160,8 @@ cdef class Master:
     cdef dict _slave_emergency_callbacks
     cdef bint _in_op
     cdef bint _do_check_state
+    cdef int _sdo_read_timeout
+    cdef int _sdo_write_timeout
 
     def __cinit__(self):
         self._context = soemx_context_create()
@@ -174,6 +176,8 @@ cdef class Master:
         self._slave_emergency_callbacks = {}
         self._in_op = False
         self._do_check_state = False
+        self._sdo_read_timeout = 20_000
+        self._sdo_write_timeout = 20_000
         if self._context == NULL or self._redport == NULL:
             raise MemoryError("unable to allocate SOEM context")
 
@@ -275,6 +279,28 @@ cdef class Master:
         if callback is not None and not callable(callback):
             raise TypeError("setup_func must be callable or None")
         self._setup_func = callback
+
+    @property
+    def sdo_read_timeout(self):
+        """Default SDO read timeout in microseconds."""
+        return self._sdo_read_timeout
+
+    @sdo_read_timeout.setter
+    def sdo_read_timeout(self, value):
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError("sdo_read_timeout must be a positive integer")
+        self._sdo_read_timeout = value
+
+    @property
+    def sdo_write_timeout(self):
+        """Default SDO write timeout in microseconds."""
+        return self._sdo_write_timeout
+
+    @sdo_write_timeout.setter
+    def sdo_write_timeout(self, value):
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError("sdo_write_timeout must be a positive integer")
+        self._sdo_write_timeout = value
 
     def recover_slave(self, slave: int, timeout: int = 5_000_000) -> int:
         """Recover a slave that has lost communication."""
@@ -1280,7 +1306,7 @@ cdef class Slave:
         return {"outputs": output_size, "inputs": input_size}
 
     def sdo_read(self, index: int, subindex: int = 0, size: int = 1024,
-                 ca: bool = False, timeout: int = 20_000, **kwargs) -> bytes:
+                 ca: bool = False, timeout=None, **kwargs) -> bytes:
         """Read an SDO and return its raw bytes."""
         if "complete_access" in kwargs:
             ca = kwargs.pop("complete_access")
@@ -1288,6 +1314,8 @@ cdef class Slave:
             raise TypeError("unexpected keyword argument: %s" % next(iter(kwargs)))
         if not self._master._open:
             raise RuntimeError("master is not open")
+        if timeout is None:
+            timeout = self._master._sdo_read_timeout
         if not 0 <= index <= 0xffff or not 0 <= subindex <= 0xff:
             raise ValueError("invalid SDO index or subindex")
         if size <= 0 or timeout <= 0:
@@ -1360,7 +1388,7 @@ cdef class Slave:
         return result
 
     def sdo_write(self, index: int, subindex_or_data, data=None,
-                  ca: bool = False, timeout: int = 20_000,
+                  ca: bool = False, timeout=None,
                   subindex=None, **kwargs) -> int:
         """Write raw bytes to an SDO and return SOEM's result code."""
         if "complete_access" in kwargs:
@@ -1378,6 +1406,8 @@ cdef class Slave:
             subindex = subindex_or_data
         if not self._master._open:
             raise RuntimeError("master is not open")
+        if timeout is None:
+            timeout = self._master._sdo_write_timeout
         if not isinstance(data, (bytes, bytearray, memoryview)) or not data:
             raise TypeError("data must be a non-empty bytes-like object")
         data = bytes(data)
