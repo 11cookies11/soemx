@@ -6,6 +6,7 @@ from soemx import (INIT_STATE, PREOP_STATE, SAFEOP_STATE, OP_STATE,
 from soemx.errors import (SoemxError, SdoError, SdoInfoError, MailboxError,
                           PacketError, ConfigMapError, EepromError)
 from soemx.adapters import Adapter, _decode
+from soemx import Adapter as ExportedAdapter
 
 
 def test_known_al_status():
@@ -62,3 +63,4 @@ def test_adapter_object_has_text_attributes():
     adapter = Adapter("eth0", "Ethernet adapter")
     assert (adapter.name, adapter.desc) == ("eth0", "Ethernet adapter")
     assert _decode(b"eth0\0ignored") == "eth0"
+    assert ExportedAdapter is Adapter
