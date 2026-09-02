@@ -1,14 +1,18 @@
 from pathlib import Path
+import os
 from setuptools import Extension, setup
 from Cython.Build import cythonize
 
-root = Path(__file__).parent
+root = Path(__file__).parent.resolve()
 soem = root / "vendor" / "SOEM"
-sources = [str(root / "soemx" / "soemx.pyx"), str(root / "soemx" / "soemx_native.c")]
-sources += [str(soem / "src" / name) for name in [
+sources = ["soemx/soemx.pyx", "soemx/soemx_native.c"]
+sources += [f"vendor/SOEM/src/{name}" for name in [
     "ec_base.c", "ec_coe.c", "ec_config.c", "ec_dc.c", "ec_eoe.c",
     "ec_foe.c", "ec_main.c", "ec_print.c", "ec_soe.c"]]
-sources += [str(soem / "osal" / "win32" / "osal.c"), str(soem / "oshw" / "win32" / "nicdrv.c"), str(soem / "oshw" / "win32" / "oshw.c")]
+sources += ["vendor/SOEM/osal/win32/osal.c", "vendor/SOEM/oshw/win32/nicdrv.c", "vendor/SOEM/oshw/win32/oshw.c"]
+# setuptools requires source entries to be relative to setup.py.  The vendored
+# SOEM paths are normalized to POSIX separators for manifest generation.
+sources = [path.replace("\\", "/") for path in sources]
 
 extension = Extension(
     "soemx._soemx",
@@ -18,4 +22,12 @@ extension = Extension(
     libraries=["wpcap", "Packet", "winmm", "ws2_32"],
 )
 
-setup(ext_modules=cythonize([extension], language_level=3))
+extensions = cythonize([extension], language_level=3)
+for ext in extensions:
+    ext.sources = [os.path.relpath(source, root).replace("\\", "/")
+                   for source in ext.sources]
+
+setup(
+    ext_modules=extensions,
+    exclude_package_data={"soemx": ["*.c", "*.h"]},
+)
