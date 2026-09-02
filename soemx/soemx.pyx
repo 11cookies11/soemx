@@ -256,7 +256,7 @@ cdef class Master:
 
     @property
     def setup_func(self):
-        """Callback invoked with each discovered Slave after config_init()."""
+        """Default callback invoked for each slave before PDO mapping."""
         return self._setup_func
 
     @setup_func.setter
