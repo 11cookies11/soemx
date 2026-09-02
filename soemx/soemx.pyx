@@ -1,4 +1,5 @@
 from libc.stdint cimport uint16_t
+from libc.string cimport strlen
 
 cdef extern from "soem/soem.h":
     ctypedef struct ecx_contextt:
@@ -14,6 +15,13 @@ cdef extern from "soem/soem.h":
 cdef extern from "soemx_native.h":
     ecx_contextt *soemx_context_create()
     void soemx_context_destroy(ecx_contextt *context)
+    int soemx_slave_count(ecx_contextt *context)
+    const char *soemx_slave_name(ecx_contextt *context, int slave)
+    unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave)
+    unsigned int soemx_slave_id(ecx_contextt *context, int slave)
+    unsigned short soemx_slave_state(ecx_contextt *context, int slave)
+    unsigned int soemx_slave_obits(ecx_contextt *context, int slave)
+    unsigned int soemx_slave_ibits(ecx_contextt *context, int slave)
 
 
 cdef class Master:
@@ -49,6 +57,15 @@ cdef class Master:
         if not self._open:
             raise RuntimeError("master is not open")
         return ecx_config_init(self._context)
+
+    @property
+    def slave_count(self) -> int:
+        return soemx_slave_count(self._context)
+
+    def slave(self, index: int):
+        if index < 1 or index > self.slave_count:
+            raise IndexError("slave index out of range")
+        return Slave(self, index)
 
     def eoe(self, slave: int, port: int = 0):
         """Return an EoE channel for a configured slave and mailbox port."""
@@ -111,3 +128,43 @@ cdef class Eoe:
         if result <= 0:
             raise TimeoutError("EoE frame receive failed or timed out")
         return bytes(buffer[:size])
+
+
+cdef class Slave:
+    cdef Master _master
+    cdef int _index
+
+    def __cinit__(self, Master master, int index):
+        self._master = master
+        self._index = index
+
+    @property
+    def index(self):
+        return self._index
+
+    @property
+    def name(self):
+        return soemx_slave_name(self._master._context, self._index).decode("utf-8", errors="replace")
+
+    @property
+    def manufacturer(self):
+        return soemx_slave_manufacturer(self._master._context, self._index)
+
+    @property
+    def id(self):
+        return soemx_slave_id(self._master._context, self._index)
+
+    @property
+    def state(self):
+        return soemx_slave_state(self._master._context, self._index)
+
+    @property
+    def output_bits(self):
+        return soemx_slave_obits(self._master._context, self._index)
+
+    @property
+    def input_bits(self):
+        return soemx_slave_ibits(self._master._context, self._index)
+
+    def eoe(self, port: int = 0):
+        return self._master.eoe(self._index, port)
