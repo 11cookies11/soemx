@@ -11,7 +11,9 @@ The Cython extension currently provides:
 - `Master.open()` / `close()` and context-manager support
 - slave discovery, state control, AL diagnostics and EEPROM access
 - mapped process data through `Master.io_map`, `Slave.inputs` and `Slave.outputs`
-- cyclic and grouped process-data exchange, direct `rxpdo()` / `txpdo()` access
+- cyclic and grouped process-data exchange, one-shot `exchange_processdata()` /
+  `exchange_processdata_group()`, direct `rxpdo()` / `txpdo()` access
+- actual PDO map length through `Master.mapped_size`, plus writable memory views
 - SDO / CoE, SDO information discovery, FoE and SoE
 - EoE frame send/receive and raw mailbox transport
 - distributed clocks, DC sync0, overlap/packed mapping and queued errors
