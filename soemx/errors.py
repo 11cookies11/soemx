@@ -2,12 +2,52 @@ class SoemxError(Exception):
     """Base class for soemx errors."""
 
 
-class SdoError(SoemxError): pass
-class SdoInfoError(SoemxError): pass
-class MailboxError(SoemxError): pass
-class PacketError(SoemxError): pass
-class ConfigMapError(SoemxError): pass
-class EepromError(SoemxError): pass
+class SdoError(SoemxError):
+    def __init__(self, slave_pos=None, index=None, subindex=None,
+                 abort_code=None, desc=""):
+        self.slave_pos = slave_pos
+        self.index = index
+        self.subindex = subindex
+        self.abort_code = abort_code
+        self.desc = desc
+        super().__init__(desc)
+
+
+class SdoInfoError(SoemxError):
+    def __init__(self, message=""):
+        self.message = message
+        super().__init__(message)
+
+
+class MailboxError(SoemxError):
+    def __init__(self, slave_pos=None, error_code=None, desc=""):
+        self.slave_pos = slave_pos
+        self.error_code = error_code
+        self.desc = desc
+        super().__init__(desc)
+
+
+class PacketError(SoemxError):
+    def __init__(self, slave_pos=None, error_code=None, message="", desc=""):
+        self.slave_pos = slave_pos
+        self.error_code = error_code
+        self.message = message
+        self.desc = desc
+        super().__init__(message or desc)
+
+
+class ConfigMapError(SoemxError):
+    def __init__(self, error_list=None):
+        self.error_list = [] if error_list is None else list(error_list)
+        super().__init__(self.error_list)
+
+
+class EepromError(SoemxError):
+    def __init__(self, message=""):
+        self.message = message
+        super().__init__(message)
+
+
 class WkcError(SoemxError): pass
 class NetworkInterfaceNotOpenError(SoemxError): pass
 
