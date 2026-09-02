@@ -35,6 +35,12 @@ cdef extern from "soem/soem.h":
                     uint32_t password, int *psize, void *p, int timeout) noexcept nogil
     int ecx_FOEwrite(ecx_contextt *context, uint16_t slave, char *filename,
                      uint32_t password, int psize, void *p, int timeout) noexcept nogil
+    int ecx_SoEread(ecx_contextt *context, uint16_t slave, unsigned char drive,
+                    unsigned char flags, uint16_t idn, int *psize, void *p,
+                    int timeout) noexcept nogil
+    int ecx_SoEwrite(ecx_contextt *context, uint16_t slave, unsigned char drive,
+                     unsigned char flags, uint16_t idn, int psize, void *p,
+                     int timeout) noexcept nogil
     int ecx_EOEsend(ecx_contextt *context, uint16_t slave, unsigned char port,
                     int psize, void *p, int timeout) noexcept nogil
     int ecx_EOErecv(ecx_contextt *context, uint16_t slave, unsigned char port,
@@ -435,6 +441,57 @@ cdef class Slave:
                                   timeout_ms)
         if result <= 0:
             raise RuntimeError("FoE write failed")
+        return result
+
+    def soe_read(self, idn: int, drive: int = 0, element_flags: int = 0x40,
+                 size: int = 1024, timeout: int = 20_000) -> bytes:
+        """Read a raw SoE IDN value."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if not 0 <= idn <= 0xffff or not 0 <= drive <= 0xff:
+            raise ValueError("invalid IDN or drive number")
+        if size <= 0 or timeout <= 0:
+            raise ValueError("size and timeout must be positive")
+        buffer = bytearray(size)
+        cdef char *buffer_ptr = buffer
+        cdef int actual_size = size
+        cdef int timeout_ms = timeout
+        cdef unsigned char drive_no = <unsigned char>drive
+        cdef unsigned char flags = <unsigned char>element_flags
+        cdef uint16_t soe_idn = <uint16_t>idn
+        cdef int result
+        with nogil:
+            result = ecx_SoEread(self._master._context, self._index, drive_no,
+                                 flags, soe_idn, &actual_size,
+                                 <void *>buffer_ptr, timeout_ms)
+        if result <= 0:
+            raise RuntimeError("SoE read failed")
+        return bytes(buffer[:actual_size])
+
+    def soe_write(self, idn: int, data: bytes, drive: int = 0,
+                  element_flags: int = 0x40, timeout: int = 20_000) -> int:
+        """Write a raw SoE IDN value."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if not isinstance(data, bytes) or not data:
+            raise TypeError("data must be non-empty bytes")
+        if not 0 <= idn <= 0xffff or not 0 <= drive <= 0xff:
+            raise ValueError("invalid IDN or drive number")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        cdef const char *data_ptr = data
+        cdef int data_size = len(data)
+        cdef int timeout_ms = timeout
+        cdef unsigned char drive_no = <unsigned char>drive
+        cdef unsigned char flags = <unsigned char>element_flags
+        cdef uint16_t soe_idn = <uint16_t>idn
+        cdef int result
+        with nogil:
+            result = ecx_SoEwrite(self._master._context, self._index, drive_no,
+                                  flags, soe_idn, data_size,
+                                  <void *>data_ptr, timeout_ms)
+        if result <= 0:
+            raise RuntimeError("SoE write failed")
         return result
 
 
