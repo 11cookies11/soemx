@@ -302,6 +302,23 @@ cdef class Master:
             raise ValueError("sdo_write_timeout must be a positive integer")
         self._sdo_write_timeout = value
 
+    @property
+    def always_release_gil(self):
+        """Whether blocking native operations release Python's GIL.
+
+        soemx uses one consistent policy: blocking SOEM operations execute
+        with the GIL released.  The property is intentionally read-only.
+        """
+        return True
+
+    def check_release_gil(self, release_gil=None):
+        """Return the effective GIL policy for a call.
+
+        The native implementation always releases the GIL for blocking
+        operations, so an explicit ``False`` cannot disable that policy.
+        """
+        return True
+
     def recover_slave(self, slave: int, timeout: int = 5_000_000) -> int:
         """Recover a slave that has lost communication."""
         if not self._open:

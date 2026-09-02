@@ -16,6 +16,8 @@ The Cython extension currently provides:
 - actual PDO map length through `Master.mapped_size`, plus writable memory views
 - SDO / CoE, SDO information discovery, FoE and SoE
 - configurable default SDO read/write timeouts through `Master`
+- consistent GIL release for blocking native operations through
+  `Master.always_release_gil` and `Master.check_release_gil()`
 - EoE frame send/receive and raw mailbox transport
 - distributed clocks, DC sync0, overlap/packed mapping and queued errors
 - parsed slave mailbox parameters (`mailbox_out_address`, `mailbox_out_size`,
