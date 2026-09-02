@@ -674,6 +674,20 @@ cdef class Master:
             raise TypeError("callback must be callable")
         self._emergency_callbacks.append(callback)
 
+    def remove_emergency_callback(self, callback):
+        """Remove a previously registered emergency callback."""
+        try:
+            self._emergency_callbacks.remove(callback)
+        except ValueError:
+            return False
+        return True
+
+    def clear_emergency_callbacks(self):
+        """Remove all registered emergency callbacks."""
+        count = len(self._emergency_callbacks)
+        self._emergency_callbacks = []
+        return count
+
     def errors(self):
         """Return all currently queued SOEM errors in FIFO order."""
         result = []
