@@ -14,6 +14,19 @@ OP_STATE = 0x08
 STATE_ACK = 0x10
 STATE_ERROR = 0x10
 
+# Common EtherCAT register and CoE capability constants exposed by PySOEM.
+ECT_REG_WD_DIV = 0x0400
+ECT_REG_WD_TIME_PDI = 0x0410
+ECT_REG_WD_TIME_PROCESSDATA = 0x0420
+ECT_REG_SM0 = 0x0800
+ECT_REG_SM1 = ECT_REG_SM0 + 0x08
+ECT_COEDET_SDO = 0x01
+ECT_COEDET_SDOINFO = 0x02
+ECT_COEDET_PDOASSIGN = 0x04
+ECT_COEDET_PDOCONFIG = 0x08
+ECT_COEDET_UPLOAD = 0x10
+ECT_COEDET_SDOCA = 0x20
+
 __version__ = "0.1.0.dev0"
 
 
@@ -39,4 +52,7 @@ __all__ = ["Master", "find_adapters", "open", "__version__", "al_status_code_to_
            "MailboxError", "PacketError", "ConfigMapError", "EepromError",
            "WkcError", "NetworkInterfaceNotOpenError", "NONE_STATE", "INIT_STATE",
            "PREOP_STATE", "BOOT_STATE", "SAFEOP_STATE", "OP_STATE",
-           "STATE_ACK", "STATE_ERROR"]
+           "STATE_ACK", "STATE_ERROR", "ECT_REG_WD_DIV", "ECT_REG_WD_TIME_PDI",
+           "ECT_REG_WD_TIME_PROCESSDATA", "ECT_REG_SM0", "ECT_REG_SM1",
+           "ECT_COEDET_SDO", "ECT_COEDET_SDOINFO", "ECT_COEDET_PDOASSIGN",
+           "ECT_COEDET_PDOCONFIG", "ECT_COEDET_UPLOAD", "ECT_COEDET_SDOCA"]
