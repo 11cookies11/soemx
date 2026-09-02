@@ -51,6 +51,8 @@ cdef extern from "soemx_native.h":
     unsigned int soemx_slave_obits(ecx_contextt *context, int slave)
     unsigned int soemx_slave_ibits(ecx_contextt *context, int slave)
     long long soemx_dc_time(ecx_contextt *context)
+    int soemx_mailbox_receive(ecx_contextt *context, unsigned short slave,
+                              int timeout, void *buffer, int capacity) noexcept nogil
 
 
 cdef class Master:
@@ -176,6 +178,26 @@ cdef class Master:
         with nogil:
             result = ecx_receive_processdata(self._context, timeout_us)
         return result
+
+    def mailbox_receive(self, slave: int, size: int = 2048,
+                        timeout: int = 20_000) -> bytes:
+        """Receive a raw mailbox buffer copied out of SOEM's internal pool."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count or size <= 0 or timeout <= 0:
+            raise ValueError("invalid slave, size, or timeout")
+        buffer = bytearray(size)
+        cdef char *buffer_ptr = buffer
+        cdef int timeout_ms = timeout
+        cdef unsigned short slave_id = <unsigned short>slave
+        cdef int buffer_size = size
+        cdef int result
+        with nogil:
+            result = soemx_mailbox_receive(self._context, slave_id,
+                                           timeout_ms, <void *>buffer_ptr, buffer_size)
+        if result <= 0:
+            raise TimeoutError("mailbox receive failed or timed out")
+        return bytes(buffer[:result])
 
     def read_state(self) -> int:
         """Read the state of every configured slave; return slave count."""
