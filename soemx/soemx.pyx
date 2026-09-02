@@ -1,7 +1,7 @@
 from libc.stdint cimport uint16_t, uint32_t, uint64_t, int32_t
 from libc.string cimport strlen
 import warnings
-from .errors import Emergency, SdoError, SdoInfoError, MailboxError
+from .errors import Emergency, SdoError, SdoInfoError, MailboxError, PacketError
 from .adapters import Adapter, _decode
 
 cdef extern from "soem/soem.h":
@@ -716,6 +716,9 @@ cdef class Master:
         code = 0 if error is None else error.get("type", 0)
         raise MailboxError(slave, code, message)
 
+    def _raise_packet_error(self, slave, code, message):
+        raise PacketError(slave, code, message, message)
+
     @property
     def error_pending(self):
         """Whether SOEM currently has at least one queued error."""
@@ -888,7 +891,8 @@ cdef class Eoe:
             result = ecx_EOEsend(self._master._context, self._slave, self._port,
                                  data_size, <void *>data_ptr, timeout_ms)
         if result <= 0:
-            raise TimeoutError("EoE frame send failed or timed out")
+            self._master._raise_packet_error(self._slave, result,
+                                              "EoE frame send failed or timed out")
         return result
 
     def set_ip(self, ip: bytes, subnet: bytes = b"\xff\xff\xff\x00",
@@ -913,7 +917,8 @@ cdef class Eoe:
             result = soemx_eoe_set_ip(self._master._context, self._slave, self._port,
                                       ip_ptr, subnet_ptr, gateway_ptr, timeout_ms)
         if result <= 0:
-            raise RuntimeError("EoE IP configuration failed")
+            self._master._raise_packet_error(self._slave, result,
+                                              "EoE IP configuration failed")
         return result
 
     def get_ip(self, timeout: int = 20000):
@@ -931,7 +936,8 @@ cdef class Eoe:
             result = soemx_eoe_get_ip(self._master._context, self._slave, self._port,
                                       ip, subnet, gateway, timeout_ms)
         if result <= 0:
-            raise RuntimeError("EoE IP query failed")
+            self._master._raise_packet_error(self._slave, result,
+                                              "EoE IP query failed")
         return bytes(ip), bytes(subnet), bytes(gateway)
 
     def receive(self, max_size: int = 1600, timeout: int = 20000) -> bytes:
@@ -951,7 +957,8 @@ cdef class Eoe:
             result = ecx_EOErecv(self._master._context, self._slave, self._port,
                                  &size, <void *>buffer_ptr, timeout_ms)
         if result <= 0:
-            raise TimeoutError("EoE frame receive failed or timed out")
+            self._master._raise_packet_error(self._slave, result,
+                                              "EoE frame receive failed or timed out")
         return bytes(buffer[:size])
 
 
