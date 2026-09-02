@@ -67,6 +67,7 @@ cdef extern from "soem/soem.h":
     int ecx_EOErecv(ecx_contextt *context, uint16_t slave, unsigned char port,
                     int *psize, void *p, int timeout) noexcept nogil
     int ecx_mbxempty(ecx_contextt *context, uint16_t slave, int timeout) noexcept nogil
+    int ecx_iserror(ecx_contextt *context)
 
 cdef extern from "soemx_native.h":
     ecx_contextt *soemx_context_create()
@@ -616,6 +617,18 @@ cdef class Master:
             for callback in self._emergency_callbacks:
                 callback(notification)
         return error
+
+    @property
+    def error_pending(self):
+        """Whether SOEM currently has at least one queued error."""
+        return bool(ecx_iserror(self._context))
+
+    def clear_errors(self):
+        """Discard all queued SOEM errors and return the number removed."""
+        count = 0
+        while self.pop_error() is not None:
+            count += 1
+        return count
 
     def add_emergency_callback(self, callback):
         """Register a callback invoked with queued emergency error mappings."""
