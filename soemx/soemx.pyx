@@ -678,7 +678,9 @@ cdef class Master:
                                &w1, &w2):
             return None
         error = {"slave": slave, "index": index, "subindex": subindex,
-                 "type": error_type, "abort_code": abort_code}
+                 "type": error_type, "abort_code": abort_code,
+                 "error_reg": error_reg, "error_register": error_reg,
+                 "b1": b1, "w1": w1, "w2": w2}
         if error_type == 1:
             notification = Emergency(slave, abort_code, error_reg, b1, w1, w2)
             for callback in self._emergency_callbacks:

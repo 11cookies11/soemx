@@ -31,6 +31,8 @@ operations for diagnostics.
 EoE channels accept any bytes-like frame buffer and expose IPv4 configuration
 through `set_ip()` / `get_ip()`. Emergency mailbox notifications are delivered
 as structured `Emergency` objects through Master-level or per-slave callbacks.
+Raw records from `pop_error()` retain the associated register and auxiliary
+word fields for diagnostics.
 
 ## Build and runtime
 
