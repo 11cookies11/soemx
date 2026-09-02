@@ -98,6 +98,16 @@ void soemx_set_packed(ecx_contextt *context, int enabled)
     if (context) context->packedMode = enabled ? TRUE : FALSE;
 }
 
+void soemx_set_manual_state_change(ecx_contextt *context, int enabled)
+{
+    if (context) context->manualstatechange = enabled ? 1 : 0;
+}
+
+int soemx_get_manual_state_change(ecx_contextt *context)
+{
+    return context ? context->manualstatechange : 0;
+}
+
 int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                     unsigned short *index, unsigned char *subindex,
                     int *type, int *abort_code)
