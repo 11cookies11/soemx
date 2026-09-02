@@ -1,7 +1,7 @@
 from libc.stdint cimport uint16_t, uint32_t, uint64_t, int32_t
 from libc.string cimport strlen
 import warnings
-from .errors import Emergency
+from .errors import Emergency, SdoError, SdoInfoError
 from .adapters import Adapter, _decode
 
 cdef extern from "soem/soem.h":
@@ -1175,6 +1175,11 @@ cdef class Slave:
             return 0x0420
         raise AttributeError("watchdog type must be 'pdi' or 'processdata'")
 
+    def _raise_sdo_error(self, index, subindex, message):
+        error = self._master.pop_error()
+        abort_code = 0 if error is None else error.get("abort_code", 0)
+        raise SdoError(self._index, index, subindex, abort_code, message)
+
     def _get_watchdog_divider_ns(self):
         divider = int.from_bytes(
             self._master.read_register(self._index, 0x0400, 2, 4000),
@@ -1367,7 +1372,7 @@ cdef class Slave:
                                  sdo_index, sdo_subindex, complete_access_flag, &actual_size,
                                  <void *>buffer_ptr, timeout_ms)
         if result <= 0:
-            raise RuntimeError("SDO read failed")
+            self._raise_sdo_error(index, subindex, "SDO read failed")
         return bytes(buffer[:actual_size])
 
     def sdo_info(self):
@@ -1383,7 +1388,7 @@ cdef class Slave:
                                              &index, &datatype, &object_code,
                                              &max_sub, name, 41)
         if count <= 0:
-            raise RuntimeError("SDO info read failed")
+            raise SdoInfoError("SDO info read failed")
         result = []
         for entry in range(count):
             soemx_read_od_entry(self._master._context, self._index, entry,
@@ -1409,7 +1414,7 @@ cdef class Slave:
                                              object, -1, &value_info, &datatype,
                                              &bit_length, &access, name, 41)
         if count <= 0:
-            raise RuntimeError("SDO entry info read failed")
+            raise SdoInfoError("SDO entry info read failed")
         result = []
         for entry in range(count):
             soemx_read_oe_entry(self._master._context, self._index, object, entry,
@@ -1461,7 +1466,7 @@ cdef class Slave:
                                   sdo_index, sdo_subindex, complete_access_flag, data_size,
                                   <const void *>data_ptr, timeout_ms)
         if result <= 0:
-            raise RuntimeError("SDO write failed")
+            self._raise_sdo_error(index, subindex, "SDO write failed")
         return result
 
     def foe_read(self, filename: str, password: int = 0, size: int = 1_048_576,
