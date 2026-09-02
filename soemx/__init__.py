@@ -37,12 +37,12 @@ def __getattr__(name):
     raise AttributeError(name)
 
 
-def open(interface: str):
-    """Open an EtherCAT master on *interface* and return it."""
+def open(interface: str, interface2=None):
+    """Open an EtherCAT master and optionally configure a redundant interface."""
     from ._soemx import Master
     master = Master()
     try:
-        master.open(interface)
+        master.open(interface, interface2)
     except Exception:
         master.close()
         raise

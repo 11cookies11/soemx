@@ -8,7 +8,7 @@ The project is intended to provide a complete, Python-friendly API for EtherCAT 
 
 The Cython extension currently provides:
 
-- `Master.open()` / `close()` and context-manager support
+- `Master.open()` / `close()` and context-manager support, including optional redundancy
 - slave discovery, state control, AL diagnostics and EEPROM access
 - mapped process data through `Master.io_map`, `Slave.inputs` and `Slave.outputs`
 - cyclic and grouped process-data exchange, one-shot `exchange_processdata()` /
