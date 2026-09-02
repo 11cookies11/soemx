@@ -75,6 +75,7 @@ cdef extern from "soemx_native.h":
     ecx_contextt *soemx_context_create()
     void soemx_context_destroy(ecx_contextt *context)
     unsigned short soemx_expected_wkc(ecx_contextt *context)
+    unsigned short soemx_group_expected_wkc(ecx_contextt *context, unsigned char group)
     unsigned short soemx_master_state(ecx_contextt *context)
     void soemx_set_master_state(ecx_contextt *context, unsigned short state)
     ecx_redportt *soemx_redport_create()
@@ -710,6 +711,12 @@ cdef class Master:
     @property
     def expected_wkc(self):
         return soemx_expected_wkc(self._context)
+
+    def expected_wkc_for_group(self, group: int = 0):
+        """Return the expected working counter for a SOEM group."""
+        if not 0 <= group <= 255:
+            raise ValueError("group must be between 0 and 255")
+        return soemx_group_expected_wkc(self._context, <unsigned char>group)
 
     @property
     def state(self):
