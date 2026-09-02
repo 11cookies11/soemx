@@ -63,6 +63,9 @@ cdef extern from "soemx_native.h":
     unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave)
     unsigned int soemx_slave_id(ecx_contextt *context, int slave)
     unsigned short soemx_slave_state(ecx_contextt *context, int slave)
+    unsigned short soemx_slave_al_status(ecx_contextt *context, int slave)
+    int soemx_slave_has_dc(ecx_contextt *context, int slave)
+    int soemx_slave_is_lost(ecx_contextt *context, int slave)
     unsigned int soemx_slave_obits(ecx_contextt *context, int slave)
     unsigned int soemx_slave_ibits(ecx_contextt *context, int slave)
     unsigned char *soemx_slave_outputs(ecx_contextt *context, int slave)
@@ -445,6 +448,18 @@ cdef class Slave:
     @property
     def state(self):
         return soemx_slave_state(self._master._context, self._index)
+
+    @property
+    def al_status_code(self):
+        return soemx_slave_al_status(self._master._context, self._index)
+
+    @property
+    def has_dc(self):
+        return bool(soemx_slave_has_dc(self._master._context, self._index))
+
+    @property
+    def is_lost(self):
+        return bool(soemx_slave_is_lost(self._master._context, self._index))
 
     @property
     def output_bits(self):

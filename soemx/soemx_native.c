@@ -17,6 +17,9 @@ const char *soemx_slave_name(ecx_contextt *context, int slave) { return context-
 unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_man; }
 unsigned int soemx_slave_id(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_id; }
 unsigned short soemx_slave_state(ecx_contextt *context, int slave) { return context->slavelist[slave].state; }
+unsigned short soemx_slave_al_status(ecx_contextt *context, int slave) { return context->slavelist[slave].ALstatuscode; }
+int soemx_slave_has_dc(ecx_contextt *context, int slave) { return context->slavelist[slave].hasdc ? 1 : 0; }
+int soemx_slave_is_lost(ecx_contextt *context, int slave) { return context->slavelist[slave].islost ? 1 : 0; }
 unsigned int soemx_slave_obits(ecx_contextt *context, int slave) { return context->slavelist[slave].Obits; }
 unsigned int soemx_slave_ibits(ecx_contextt *context, int slave) { return context->slavelist[slave].Ibits; }
 unsigned char *soemx_slave_outputs(ecx_contextt *context, int slave) { return context->slavelist[slave].outputs; }
