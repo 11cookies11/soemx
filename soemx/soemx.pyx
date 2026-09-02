@@ -633,8 +633,8 @@ cdef class Master:
         """Return an EoE channel for a configured slave and mailbox port."""
         if not self._open:
             raise RuntimeError("master is not open")
-        if slave < 1 or slave > 65535:
-            raise ValueError("slave must be between 1 and 65535")
+        if slave < 1 or slave > self.slave_count:
+            raise IndexError("slave index out of range")
         if port < 0 or port > 15:
             raise ValueError("port must be between 0 and 15")
         return Eoe(self, slave, port)
