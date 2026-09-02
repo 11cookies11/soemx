@@ -1,6 +1,5 @@
 """Python interface for SOEM, under active development."""
 
-from ._soemx import Master, find_adapters
 from .errors import (SoemxError, SdoError, SdoInfoError, MailboxError,
                      PacketError, ConfigMapError, EepromError, WkcError,
                      NetworkInterfaceNotOpenError)
@@ -18,8 +17,16 @@ STATE_ERROR = 0x10
 __version__ = "0.1.0.dev0"
 
 
-def open(interface: str) -> Master:
+def __getattr__(name):
+    if name in ("Master", "find_adapters"):
+        from ._soemx import Master, find_adapters
+        return Master if name == "Master" else find_adapters
+    raise AttributeError(name)
+
+
+def open(interface: str):
     """Open an EtherCAT master on *interface* and return it."""
+    from ._soemx import Master
     master = Master()
     try:
         master.open(interface)
