@@ -980,8 +980,12 @@ cdef class Slave:
         return {"outputs": output_size, "inputs": input_size}
 
     def sdo_read(self, index: int, subindex: int = 0, size: int = 1024,
-                 complete_access: bool = False, timeout: int = 20_000) -> bytes:
+                 ca: bool = False, timeout: int = 20_000, **kwargs) -> bytes:
         """Read an SDO and return its raw bytes."""
+        if "complete_access" in kwargs:
+            ca = kwargs.pop("complete_access")
+        if kwargs:
+            raise TypeError("unexpected keyword argument: %s" % next(iter(kwargs)))
         if not self._master._open:
             raise RuntimeError("master is not open")
         if not 0 <= index <= 0xffff or not 0 <= subindex <= 0xff:
@@ -994,11 +998,11 @@ cdef class Slave:
         cdef int timeout_ms = timeout
         cdef uint16_t sdo_index = <uint16_t>index
         cdef unsigned char sdo_subindex = <unsigned char>subindex
-        cdef unsigned char ca = <unsigned char>complete_access
+        cdef unsigned char complete_access_flag = <unsigned char>ca
         cdef int result
         with nogil:
             result = ecx_SDOread(self._master._context, self._index,
-                                 sdo_index, sdo_subindex, ca, &actual_size,
+                                 sdo_index, sdo_subindex, complete_access_flag, &actual_size,
                                  <void *>buffer_ptr, timeout_ms)
         if result <= 0:
             raise RuntimeError("SDO read failed")
@@ -1055,9 +1059,18 @@ cdef class Slave:
                            "name": bytes(name).split(b"\0", 1)[0]})
         return result
 
-    def sdo_write(self, index: int, data: bytes, subindex: int = 0,
-                  complete_access: bool = False, timeout: int = 20_000) -> int:
+    def sdo_write(self, index: int, subindex_or_data, data=None,
+                  ca: bool = False, timeout: int = 20_000, **kwargs) -> int:
         """Write raw bytes to an SDO and return SOEM's result code."""
+        if "complete_access" in kwargs:
+            ca = kwargs.pop("complete_access")
+        if kwargs:
+            raise TypeError("unexpected keyword argument: %s" % next(iter(kwargs)))
+        if data is None:
+            data = subindex_or_data
+            subindex = 0
+        else:
+            subindex = subindex_or_data
         if not self._master._open:
             raise RuntimeError("master is not open")
         if not isinstance(data, bytes) or not data:
@@ -1071,11 +1084,11 @@ cdef class Slave:
         cdef int timeout_ms = timeout
         cdef uint16_t sdo_index = <uint16_t>index
         cdef unsigned char sdo_subindex = <unsigned char>subindex
-        cdef unsigned char ca = <unsigned char>complete_access
+        cdef unsigned char complete_access_flag = <unsigned char>ca
         cdef int result
         with nogil:
             result = ecx_SDOwrite(self._master._context, self._index,
-                                  sdo_index, sdo_subindex, ca, data_size,
+                                  sdo_index, sdo_subindex, complete_access_flag, data_size,
                                   <const void *>data_ptr, timeout_ms)
         if result <= 0:
             raise RuntimeError("SDO write failed")
