@@ -590,7 +590,7 @@ cdef class Master:
             raise ValueError("timeout must be positive")
         cdef const char *data_ptr = data
         cdef unsigned short slave_id = <unsigned short>slave
-        cdef int data_size = len(data)
+        cdef int data_size = <int>len(data)
         cdef int timeout_ms = timeout
         cdef int result
         with nogil:
@@ -650,7 +650,7 @@ cdef class Master:
         cdef const char *data_ptr = data
         cdef unsigned short slave_id = <unsigned short>slave
         cdef unsigned short register_address = <unsigned short>address
-        cdef int data_size = len(data)
+        cdef int data_size = <int>len(data)
         cdef int timeout_ms = timeout
         cdef int result
         with nogil:
@@ -854,7 +854,7 @@ cdef class Eoe:
         if timeout <= 0:
             raise ValueError("timeout must be positive")
         cdef const char *data_ptr = data
-        cdef int data_size = len(data)
+        cdef int data_size = <int>len(data)
         cdef int timeout_ms = timeout
         cdef int result
         with nogil:
@@ -1258,7 +1258,7 @@ cdef class Slave:
             raise TypeError("data must be a non-empty bytes-like object")
         data = bytes(data)
         cdef const char *data_ptr = data
-        cdef int data_size = len(data)
+        cdef int data_size = <int>len(data)
         cdef uint16_t pdo = <uint16_t>pdo_number
         cdef int result
         with nogil:
@@ -1421,7 +1421,7 @@ cdef class Slave:
         if timeout <= 0:
             raise ValueError("timeout must be positive")
         cdef const char *data_ptr = data
-        cdef int data_size = len(data)
+        cdef int data_size = <int>len(data)
         cdef int timeout_ms = timeout
         cdef uint16_t sdo_index = <uint16_t>index
         cdef unsigned char sdo_subindex = <unsigned char>subindex
@@ -1475,7 +1475,7 @@ cdef class Slave:
         name = filename.encode("utf-8")
         cdef char *name_ptr = name
         cdef const char *data_ptr = data
-        cdef int data_size = len(data)
+        cdef int data_size = <int>len(data)
         cdef int timeout_ms = timeout
         cdef unsigned int file_password = password
         cdef int result
