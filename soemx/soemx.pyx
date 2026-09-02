@@ -1,7 +1,7 @@
 from libc.stdint cimport uint16_t, uint32_t, uint64_t, int32_t
 from libc.string cimport strlen
 import warnings
-from .errors import Emergency, SdoError, SdoInfoError
+from .errors import Emergency, SdoError, SdoInfoError, MailboxError
 from .adapters import Adapter, _decode
 
 cdef extern from "soem/soem.h":
@@ -592,7 +592,7 @@ cdef class Master:
             result = soemx_mailbox_receive(self._context, slave_id,
                                            timeout_ms, <void *>buffer_ptr, buffer_size)
         if result <= 0:
-            raise TimeoutError("mailbox receive failed or timed out")
+            self._raise_mailbox_error(slave, "mailbox receive failed or timed out")
         return bytes(buffer[:result])
 
     def mailbox_send(self, slave: int, data: bytes, timeout: int = 20_000) -> int:
@@ -616,7 +616,7 @@ cdef class Master:
                                         <const void *>data_ptr, data_size,
                                         timeout_ms)
         if result <= 0:
-            raise TimeoutError("mailbox send failed or timed out")
+            self._raise_mailbox_error(slave, "mailbox send failed or timed out")
         return result
 
     def mailbox_empty(self, slave: int, timeout: int = 20_000) -> int:
@@ -627,7 +627,11 @@ cdef class Master:
             raise IndexError("slave index out of range")
         if timeout <= 0:
             raise ValueError("timeout must be positive")
-        return ecx_mbxempty(self._context, <uint16_t>slave, timeout)
+        cdef int result
+        result = ecx_mbxempty(self._context, <uint16_t>slave, timeout)
+        if result <= 0:
+            self._raise_mailbox_error(slave, "mailbox did not become empty")
+        return result
 
     def read_register(self, slave: int, address: int, size: int = 2,
                       timeout: int = 20_000) -> bytes:
@@ -706,6 +710,11 @@ cdef class Master:
             for callback in self._slave_emergency_callbacks.get(slave, ()):
                 callback(notification)
         return error
+
+    def _raise_mailbox_error(self, slave, message):
+        error = self.pop_error()
+        code = 0 if error is None else error.get("type", 0)
+        raise MailboxError(slave, code, message)
 
     @property
     def error_pending(self):
