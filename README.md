@@ -4,17 +4,35 @@ Python bindings for the [Simple Open EtherCAT Master (SOEM)](https://github.com/
 
 The project is intended to provide a complete, Python-friendly API for EtherCAT master operations, including EoE (Ethernet over EtherCAT), which is not currently exposed by PySOEM.
 
-## Status
+## Current API
 
-Early development. The binding API is not stable yet.
+The Cython extension currently provides:
 
-## Planned modules
+- `Master.open()` / `close()` and context-manager support
+- slave discovery, state control, AL diagnostics and EEPROM access
+- mapped process data through `Master.io_map`, `Slave.inputs` and `Slave.outputs`
+- cyclic and grouped process-data exchange, direct `rxpdo()` / `txpdo()` access
+- SDO / CoE, SDO information discovery, FoE and SoE
+- EoE frame send/receive and raw mailbox transport
+- distributed clocks, DC sync0, overlap/packed mapping and queued errors
 
-- Master and slave lifecycle
-- Process data (PDO)
-- SDO / CoE
-- EoE mailbox transport and Ethernet frame transfer
-- FoE and SoE
-- Distributed clocks and recovery helpers
+The public API is intentionally close to PySOEM, while raw byte-oriented methods
+are used where Python cannot know a device's object data type.
+
+## Build and runtime
+
+Build the extension on Windows with Visual Studio and Cython:
+
+```powershell
+python setup.py build_ext --inplace
+python -m pytest -q
+```
+
+The Windows backend links against Npcap/WinPcap's `wpcap.dll` and `Packet.dll`.
+These DLLs are required when opening a network adapter, but pure Python modules
+and the test suite can be used without EtherCAT hardware or the packet runtime.
+
+Physical EtherCAT, PDO, mailbox and EoE behavior still requires a compatible
+network adapter and at least one EtherCAT slave.
 
 SOEM is included under `vendor/SOEM` for development and is licensed separately. See its `LICENSE.md`.
