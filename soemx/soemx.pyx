@@ -22,6 +22,8 @@ cdef extern from "soem/soem.h":
     unsigned char ecx_configdc(ecx_contextt *context)
     void ecx_dcsync0(ecx_contextt *context, uint16_t slave, unsigned char act,
                      uint32_t cycltime, int32_t cyclshift)
+    void ecx_dcsync01(ecx_contextt *context, uint16_t slave, unsigned char act,
+                      uint32_t cycltime0, uint32_t cycltime1, int32_t cyclshift)
     ec_adaptert *ec_find_adapters()
     void ec_free_adapters(ec_adaptert *adapter)
     int ecx_readstate(ecx_contextt *context)
@@ -53,6 +55,8 @@ cdef extern from "soem/soem.h":
     int ecx_TxPDO(ecx_contextt *context, uint16_t slave, uint16_t pdo_number,
                   int *psize, void *p, int timeout) noexcept nogil
     int ecx_readPDOmap(ecx_contextt *context, uint16_t slave,
+                       uint32_t *output_size, uint32_t *input_size)
+    int ecx_readIDNmap(ecx_contextt *context, uint16_t slave,
                        uint32_t *output_size, uint32_t *input_size)
     int ecx_EOEsend(ecx_contextt *context, uint16_t slave, unsigned char port,
                     int psize, void *p, int timeout) noexcept nogil
@@ -257,6 +261,19 @@ cdef class Master:
             raise ValueError("invalid slave or cycle time")
         ecx_dcsync0(self._context, <uint16_t>slave, <unsigned char>active,
                     <uint32_t>cycle_time, <int32_t>cycle_shift)
+
+    def dc_sync01(self, slave: int, cycle_time0: int, cycle_time1: int,
+                  active: bool = True, cycle_shift: int = 0):
+        """Configure dual-cycle distributed-clock synchronization."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count:
+            raise ValueError("invalid slave")
+        if cycle_time0 <= 0 or cycle_time1 <= 0:
+            raise ValueError("cycle times must be positive")
+        ecx_dcsync01(self._context, <uint16_t>slave, <unsigned char>active,
+                     <uint32_t>cycle_time0, <uint32_t>cycle_time1,
+                     <int32_t>cycle_shift)
 
     @property
     def io_map(self):
@@ -830,6 +847,17 @@ cdef class Slave:
         if result <= 0:
             raise RuntimeError("SoE read failed")
         return bytes(buffer[:actual_size])
+
+    def soe_idn_map(self):
+        """Return mapped SoE output and input sizes in bits."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        cdef uint32_t output_size = 0
+        cdef uint32_t input_size = 0
+        if ecx_readIDNmap(self._master._context, self._index,
+                          &output_size, &input_size) <= 0:
+            raise RuntimeError("SoE IDN map read failed")
+        return {"outputs": output_size, "inputs": input_size}
 
     def soe_write(self, idn: int, data: bytes, drive: int = 0,
                   element_flags: int = 0x40, timeout: int = 20_000) -> int:
