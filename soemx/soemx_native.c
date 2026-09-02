@@ -16,6 +16,10 @@ int soemx_slave_count(ecx_contextt *context) { return context ? context->slaveco
 const char *soemx_slave_name(ecx_contextt *context, int slave) { return context->slavelist[slave].name; }
 unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_man; }
 unsigned int soemx_slave_id(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_id; }
+unsigned int soemx_slave_revision(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_rev; }
+unsigned int soemx_slave_serial(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_ser; }
+unsigned short soemx_slave_config_address(ecx_contextt *context, int slave) { return context->slavelist[slave].configadr; }
+unsigned short soemx_slave_alias_address(ecx_contextt *context, int slave) { return context->slavelist[slave].aliasadr; }
 unsigned short soemx_slave_state(ecx_contextt *context, int slave) { return context->slavelist[slave].state; }
 unsigned short soemx_slave_al_status(ecx_contextt *context, int slave) { return context->slavelist[slave].ALstatuscode; }
 int soemx_slave_has_dc(ecx_contextt *context, int slave) { return context->slavelist[slave].hasdc ? 1 : 0; }

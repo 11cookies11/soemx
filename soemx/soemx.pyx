@@ -62,6 +62,10 @@ cdef extern from "soemx_native.h":
     const char *soemx_slave_name(ecx_contextt *context, int slave)
     unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave)
     unsigned int soemx_slave_id(ecx_contextt *context, int slave)
+    unsigned int soemx_slave_revision(ecx_contextt *context, int slave)
+    unsigned int soemx_slave_serial(ecx_contextt *context, int slave)
+    unsigned short soemx_slave_config_address(ecx_contextt *context, int slave)
+    unsigned short soemx_slave_alias_address(ecx_contextt *context, int slave)
     unsigned short soemx_slave_state(ecx_contextt *context, int slave)
     unsigned short soemx_slave_al_status(ecx_contextt *context, int slave)
     int soemx_slave_has_dc(ecx_contextt *context, int slave)
@@ -444,6 +448,22 @@ cdef class Slave:
     @property
     def id(self):
         return soemx_slave_id(self._master._context, self._index)
+
+    @property
+    def revision(self):
+        return soemx_slave_revision(self._master._context, self._index)
+
+    @property
+    def serial(self):
+        return soemx_slave_serial(self._master._context, self._index)
+
+    @property
+    def config_address(self):
+        return soemx_slave_config_address(self._master._context, self._index)
+
+    @property
+    def alias_address(self):
+        return soemx_slave_alias_address(self._master._context, self._index)
 
     @property
     def state(self):
