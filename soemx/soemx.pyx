@@ -461,6 +461,12 @@ cdef class Master:
         self.send_processdata()
         return self.receive_processdata(timeout)
 
+    def exchange_processdata_group(self, group: int = 0,
+                                   timeout: int = 2_000_000) -> int:
+        """Exchange process data for one SOEM group and return its WKC."""
+        self.send_processdata_group(group)
+        return self.receive_processdata_group(group, timeout)
+
     def send_processdata_group(self, group: int = 0) -> int:
         if not self._open or self._io_map is None:
             raise RuntimeError("master is not open or PDO map is not configured")
