@@ -6,6 +6,10 @@ cdef extern from "soem/soem.h":
     int ecx_init(ecx_contextt *context, const char *ifname)
     void ecx_close(ecx_contextt *context)
     int ecx_config_init(ecx_contextt *context)
+    int ecx_EOEsend(ecx_contextt *context, uint16_t slave, unsigned char port,
+                    int psize, void *p, int timeout) noexcept nogil
+    int ecx_EOErecv(ecx_contextt *context, uint16_t slave, unsigned char port,
+                    int *psize, void *p, int timeout) noexcept nogil
 
 cdef extern from "soemx_native.h":
     ecx_contextt *soemx_context_create()
@@ -45,3 +49,65 @@ cdef class Master:
         if not self._open:
             raise RuntimeError("master is not open")
         return ecx_config_init(self._context)
+
+    def eoe(self, slave: int, port: int = 0):
+        """Return an EoE channel for a configured slave and mailbox port."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > 65535:
+            raise ValueError("slave must be between 1 and 65535")
+        if port < 0 or port > 15:
+            raise ValueError("port must be between 0 and 15")
+        return Eoe(self, slave, port)
+
+
+cdef class Eoe:
+    cdef Master _master
+    cdef uint16_t _slave
+    cdef unsigned char _port
+
+    def __cinit__(self, Master master, int slave, int port):
+        self._master = master
+        self._slave = <uint16_t>slave
+        self._port = <unsigned char>port
+
+    def send(self, data: bytes, timeout: int = 20000) -> int:
+        """Send one Ethernet frame through EoE; return SOEM's result code."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if not isinstance(data, bytes):
+            raise TypeError("data must be bytes")
+        if len(data) == 0:
+            raise ValueError("data must not be empty")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        cdef const char *data_ptr = data
+        cdef int data_size = len(data)
+        cdef int timeout_ms = timeout
+        cdef int result
+        with nogil:
+            result = ecx_EOEsend(self._master._context, self._slave, self._port,
+                                 data_size, <void *>data_ptr, timeout_ms)
+        if result <= 0:
+            raise TimeoutError("EoE frame send failed or timed out")
+        return result
+
+    def receive(self, max_size: int = 1600, timeout: int = 20000) -> bytes:
+        """Receive one reassembled Ethernet frame through EoE."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if max_size <= 0:
+            raise ValueError("max_size must be positive")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        buffer = bytearray(max_size)
+        cdef int size = max_size
+        cdef char *buffer_ptr = buffer
+        cdef int timeout_ms = timeout
+        cdef int result
+        with nogil:
+            result = ecx_EOErecv(self._master._context, self._slave, self._port,
+                                 &size, <void *>buffer_ptr, timeout_ms)
+        if result <= 0:
+            raise TimeoutError("EoE frame receive failed or timed out")
+        return bytes(buffer[:size])
