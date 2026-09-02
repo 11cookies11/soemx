@@ -163,6 +163,22 @@ int soemx_eoe_get_ip(ecx_contextt *context, unsigned short slave, unsigned char 
     return 1;
 }
 
+int soemx_read_register(ecx_contextt *context, unsigned short slave,
+                        unsigned short address, void *buffer, int size, int timeout)
+{
+    if (!context || !buffer || size <= 0 || size > 0xffff || slave == 0) return -1;
+    return ecx_FPRD(&context->port, context->slavelist[slave].configadr,
+                    address, (uint16)size, buffer, timeout);
+}
+
+int soemx_write_register(ecx_contextt *context, unsigned short slave,
+                         unsigned short address, const void *buffer, int size, int timeout)
+{
+    if (!context || !buffer || size <= 0 || size > 0xffff || slave == 0) return -1;
+    return ecx_FPWR(&context->port, context->slavelist[slave].configadr,
+                    address, (uint16)size, (void *)buffer, timeout);
+}
+
 int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                     unsigned short *index, unsigned char *subindex,
                     int *type, int *abort_code)

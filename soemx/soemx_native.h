@@ -48,6 +48,10 @@ int soemx_eoe_set_ip(ecx_contextt *context, unsigned short slave, unsigned char 
 int soemx_eoe_get_ip(ecx_contextt *context, unsigned short slave, unsigned char port,
                      unsigned char *ip, unsigned char *subnet,
                      unsigned char *gateway, int timeout);
+int soemx_read_register(ecx_contextt *context, unsigned short slave,
+                        unsigned short address, void *buffer, int size, int timeout);
+int soemx_write_register(ecx_contextt *context, unsigned short slave,
+                         unsigned short address, const void *buffer, int size, int timeout);
 int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                     unsigned short *index, unsigned char *subindex,
                     int *type, int *abort_code);

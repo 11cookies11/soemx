@@ -112,6 +112,10 @@ cdef extern from "soemx_native.h":
     int soemx_eoe_get_ip(ecx_contextt *context, unsigned short slave, unsigned char port,
                          unsigned char *ip, unsigned char *subnet,
                          unsigned char *gateway, int timeout) noexcept nogil
+    int soemx_read_register(ecx_contextt *context, unsigned short slave,
+                            unsigned short address, void *buffer, int size, int timeout) noexcept nogil
+    int soemx_write_register(ecx_contextt *context, unsigned short slave,
+                             unsigned short address, const void *buffer, int size, int timeout) noexcept nogil
     int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                         unsigned short *index, unsigned char *subindex,
                         int *type, int *abort_code)
@@ -424,6 +428,56 @@ cdef class Master:
         if timeout <= 0:
             raise ValueError("timeout must be positive")
         return ecx_mbxempty(self._context, <uint16_t>slave, timeout)
+
+    def read_register(self, slave: int, address: int, size: int = 2,
+                      timeout: int = 20_000) -> bytes:
+        """Read raw bytes from an EtherCAT slave register address."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count or not 0 <= address <= 0xffff:
+            raise ValueError("invalid slave or register address")
+        if size <= 0 or size > 0xffff or timeout <= 0:
+            raise ValueError("invalid register size or timeout")
+        buffer = bytearray(size)
+        cdef char *buffer_ptr = buffer
+        cdef unsigned short slave_id = <unsigned short>slave
+        cdef unsigned short register_address = <unsigned short>address
+        cdef int register_size = size
+        cdef int timeout_ms = timeout
+        cdef int result
+        with nogil:
+            result = soemx_read_register(self._context, slave_id,
+                                         register_address,
+                                         <void *>buffer_ptr, register_size, timeout_ms)
+        if result <= 0:
+            raise RuntimeError("register read failed")
+        return bytes(buffer)
+
+    def write_register(self, slave: int, address: int, data: bytes,
+                       timeout: int = 20_000) -> int:
+        """Write raw bytes to an EtherCAT slave register address."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count or not 0 <= address <= 0xffff:
+            raise ValueError("invalid slave or register address")
+        if not isinstance(data, bytes) or not data or len(data) > 0xffff:
+            raise ValueError("data must be non-empty and fit in a register write")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        cdef const char *data_ptr = data
+        cdef unsigned short slave_id = <unsigned short>slave
+        cdef unsigned short register_address = <unsigned short>address
+        cdef int data_size = len(data)
+        cdef int timeout_ms = timeout
+        cdef int result
+        with nogil:
+            result = soemx_write_register(self._context, slave_id,
+                                          register_address,
+                                          <const void *>data_ptr, data_size,
+                                          timeout_ms)
+        if result <= 0:
+            raise RuntimeError("register write failed")
+        return result
 
     def pop_error(self):
         """Pop the oldest SOEM error, or return ``None`` when empty."""
