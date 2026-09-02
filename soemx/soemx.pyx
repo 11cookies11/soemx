@@ -1233,6 +1233,17 @@ cdef class Slave:
     def output(self):
         return self.outputs
 
+    @output.setter
+    def output(self, data):
+        if not isinstance(data, (bytes, bytearray, memoryview)):
+            raise TypeError("output must be a bytes-like object")
+        data = bytes(data)
+        expected = self.output_size
+        if len(data) != expected:
+            raise ValueError("output length must match the mapped output size")
+        if expected:
+            self.outputs[:] = data
+
     @property
     def input(self):
         return self.inputs
