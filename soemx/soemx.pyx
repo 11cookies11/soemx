@@ -62,6 +62,7 @@ cdef extern from "soem/soem.h":
                     int psize, void *p, int timeout) noexcept nogil
     int ecx_EOErecv(ecx_contextt *context, uint16_t slave, unsigned char port,
                     int *psize, void *p, int timeout) noexcept nogil
+    int ecx_mbxempty(ecx_contextt *context, uint16_t slave, int timeout) noexcept nogil
 
 cdef extern from "soemx_native.h":
     ecx_contextt *soemx_context_create()
@@ -394,6 +395,16 @@ cdef class Master:
         if result <= 0:
             raise TimeoutError("mailbox send failed or timed out")
         return result
+
+    def mailbox_empty(self, slave: int, timeout: int = 20_000) -> int:
+        """Wait until a slave mailbox is ready for another request."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count:
+            raise IndexError("slave index out of range")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        return ecx_mbxempty(self._context, <uint16_t>slave, timeout)
 
     def pop_error(self):
         """Pop the oldest SOEM error, or return ``None`` when empty."""
