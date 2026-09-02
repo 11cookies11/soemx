@@ -44,6 +44,12 @@ cdef extern from "soem/soem.h":
     int ecx_SoEwrite(ecx_contextt *context, uint16_t slave, unsigned char drive,
                      unsigned char flags, uint16_t idn, int psize, void *p,
                      int timeout) noexcept nogil
+    int ecx_RxPDO(ecx_contextt *context, uint16_t slave, uint16_t pdo_number,
+                  int psize, const void *p) noexcept nogil
+    int ecx_TxPDO(ecx_contextt *context, uint16_t slave, uint16_t pdo_number,
+                  int *psize, void *p, int timeout) noexcept nogil
+    int ecx_readPDOmap(ecx_contextt *context, uint16_t slave,
+                       uint32_t *output_size, uint32_t *input_size)
     int ecx_EOEsend(ecx_contextt *context, uint16_t slave, unsigned char port,
                     int psize, void *p, int timeout) noexcept nogil
     int ecx_EOErecv(ecx_contextt *context, uint16_t slave, unsigned char port,
@@ -435,6 +441,60 @@ cdef class Slave:
 
     def eoe(self, port: int = 0):
         return self._master.eoe(self._index, port)
+
+    def rxpdo(self, pdo_number: int, data: bytes) -> int:
+        """Write one receive PDO directly to the slave."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if not 0 <= pdo_number <= 0xffff:
+            raise ValueError("invalid PDO number")
+        if not isinstance(data, bytes) or not data:
+            raise TypeError("data must be non-empty bytes")
+        cdef const char *data_ptr = data
+        cdef int data_size = len(data)
+        cdef uint16_t pdo = <uint16_t>pdo_number
+        cdef int result
+        with nogil:
+            result = ecx_RxPDO(self._master._context, self._index,
+                               pdo, data_size,
+                               <const void *>data_ptr)
+        if result <= 0:
+            raise RuntimeError("RxPDO write failed")
+        return result
+
+    def txpdo(self, pdo_number: int, size: int = 1024,
+              timeout: int = 20_000) -> bytes:
+        """Read one transmit PDO directly from the slave."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if not 0 <= pdo_number <= 0xffff:
+            raise ValueError("invalid PDO number")
+        if size <= 0 or timeout <= 0:
+            raise ValueError("size and timeout must be positive")
+        buffer = bytearray(size)
+        cdef char *buffer_ptr = buffer
+        cdef int actual_size = size
+        cdef int timeout_ms = timeout
+        cdef uint16_t pdo = <uint16_t>pdo_number
+        cdef int result
+        with nogil:
+            result = ecx_TxPDO(self._master._context, self._index,
+                               pdo, &actual_size,
+                               <void *>buffer_ptr, timeout_ms)
+        if result <= 0:
+            raise RuntimeError("TxPDO read failed")
+        return bytes(buffer[:actual_size])
+
+    def read_pdo_map(self):
+        """Return mapped output and input sizes in bits."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        cdef uint32_t output_size = 0
+        cdef uint32_t input_size = 0
+        if ecx_readPDOmap(self._master._context, self._index,
+                          &output_size, &input_size) <= 0:
+            raise RuntimeError("PDO map read failed")
+        return {"outputs": output_size, "inputs": input_size}
 
     def sdo_read(self, index: int, subindex: int = 0, size: int = 1024,
                  complete_access: bool = False, timeout: int = 20_000) -> bytes:
