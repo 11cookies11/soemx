@@ -178,6 +178,10 @@ cdef class Master:
         return bool(self._open)
 
     @property
+    def is_open(self):
+        return bool(self._open)
+
+    @property
     def context_initialized(self):
         return self._context != NULL
 
