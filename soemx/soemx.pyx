@@ -1,4 +1,4 @@
-from libc.stdint cimport uint16_t
+from libc.stdint cimport uint16_t, uint32_t
 from libc.string cimport strlen
 
 cdef extern from "soem/soem.h":
@@ -19,6 +19,10 @@ cdef extern from "soem/soem.h":
     int ecx_SDOwrite(ecx_contextt *context, uint16_t slave, uint16_t index,
                      unsigned char subindex, unsigned char CA, int psize,
                      const void *p, int timeout) noexcept nogil
+    int ecx_FOEread(ecx_contextt *context, uint16_t slave, char *filename,
+                    uint32_t password, int *psize, void *p, int timeout) noexcept nogil
+    int ecx_FOEwrite(ecx_contextt *context, uint16_t slave, char *filename,
+                     uint32_t password, int psize, void *p, int timeout) noexcept nogil
     int ecx_EOEsend(ecx_contextt *context, uint16_t slave, unsigned char port,
                     int psize, void *p, int timeout) noexcept nogil
     int ecx_EOErecv(ecx_contextt *context, uint16_t slave, unsigned char port,
@@ -296,4 +300,55 @@ cdef class Slave:
                                   <const void *>data_ptr, timeout_ms)
         if result <= 0:
             raise RuntimeError("SDO write failed")
+        return result
+
+    def foe_read(self, filename: str, password: int = 0, size: int = 1_048_576,
+                 timeout: int = 20_000) -> bytes:
+        """Read a file from the slave using FoE."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if not isinstance(filename, str) or not filename:
+            raise ValueError("filename must be a non-empty string")
+        if password < 0 or password > 0xffffffff or size <= 0 or timeout <= 0:
+            raise ValueError("invalid password, size, or timeout")
+        name = filename.encode("utf-8")
+        buffer = bytearray(size)
+        cdef char *name_ptr = name
+        cdef char *buffer_ptr = buffer
+        cdef int actual_size = size
+        cdef int timeout_ms = timeout
+        cdef unsigned int file_password = password
+        cdef int result
+        with nogil:
+            result = ecx_FOEread(self._master._context, self._index, name_ptr,
+                                 file_password, &actual_size, <void *>buffer_ptr,
+                                 timeout_ms)
+        if result <= 0:
+            raise RuntimeError("FoE read failed")
+        return bytes(buffer[:actual_size])
+
+    def foe_write(self, filename: str, data: bytes, password: int = 0,
+                  timeout: int = 20_000) -> int:
+        """Write a file to the slave using FoE."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if not isinstance(filename, str) or not filename:
+            raise ValueError("filename must be a non-empty string")
+        if not isinstance(data, bytes) or not data:
+            raise TypeError("data must be non-empty bytes")
+        if password < 0 or password > 0xffffffff or timeout <= 0:
+            raise ValueError("invalid password or timeout")
+        name = filename.encode("utf-8")
+        cdef char *name_ptr = name
+        cdef const char *data_ptr = data
+        cdef int data_size = len(data)
+        cdef int timeout_ms = timeout
+        cdef unsigned int file_password = password
+        cdef int result
+        with nogil:
+            result = ecx_FOEwrite(self._master._context, self._index, name_ptr,
+                                  file_password, data_size, <void *>data_ptr,
+                                  timeout_ms)
+        if result <= 0:
+            raise RuntimeError("FoE write failed")
         return result
