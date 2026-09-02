@@ -162,9 +162,9 @@ int soemx_eoe_set_ip(ecx_contextt *context, unsigned short slave, unsigned char 
     param.ip_set = 1;
     param.subnet_set = 1;
     param.default_gateway_set = 1;
-    memcpy(param.ip.addr, ip, 4);
-    memcpy(param.subnet.addr, subnet, 4);
-    memcpy(param.default_gateway.addr, gateway, 4);
+    memcpy(&param.ip.addr, ip, 4);
+    memcpy(&param.subnet.addr, subnet, 4);
+    memcpy(&param.default_gateway.addr, gateway, 4);
     return ecx_EOEsetIp(context, slave, port, &param, timeout);
 }
 
@@ -176,9 +176,9 @@ int soemx_eoe_get_ip(ecx_contextt *context, unsigned short slave, unsigned char 
     if (!context || !ip || !subnet || !gateway) return -1;
     memset(&param, 0, sizeof(param));
     if (ecx_EOEgetIp(context, slave, port, &param, timeout) <= 0) return -1;
-    memcpy(ip, param.ip.addr, 4);
-    memcpy(subnet, param.subnet.addr, 4);
-    memcpy(gateway, param.default_gateway.addr, 4);
+    memcpy(ip, &param.ip.addr, 4);
+    memcpy(subnet, &param.subnet.addr, 4);
+    memcpy(gateway, &param.default_gateway.addr, 4);
     return 1;
 }
 
