@@ -133,6 +133,8 @@ cdef class Master:
     cdef bint _open
     cdef object _io_map
     cdef object _setup_func
+    cdef dict _slave_config_funcs
+    cdef dict _slave_setup_funcs
     cdef bint _in_op
     cdef bint _do_check_state
 
@@ -140,6 +142,8 @@ cdef class Master:
         self._context = soemx_context_create()
         self._redport = soemx_redport_create()
         self._setup_func = None
+        self._slave_config_funcs = {}
+        self._slave_setup_funcs = {}
         self._in_op = False
         self._do_check_state = False
         if self._context == NULL or self._redport == NULL:
@@ -191,9 +195,6 @@ cdef class Master:
         if not self._open:
             raise RuntimeError("master is not open")
         count = ecx_config_init(self._context)
-        if count > 0 and self._setup_func is not None:
-            for index in range(1, count + 1):
-                self._setup_func(Slave(self, index))
         return count
 
     @property
@@ -233,6 +234,13 @@ cdef class Master:
             raise RuntimeError("master is not open")
         if size <= 0 or group < 0 or group > 255:
             raise ValueError("invalid IO map size or group")
+        for index in range(1, self.slave_count + 1):
+            callback = self._slave_config_funcs.get(index, self._setup_func)
+            setup_callback = self._slave_setup_funcs.get(index)
+            if callback is not None:
+                callback(Slave(self, index))
+            if setup_callback is not None:
+                setup_callback(Slave(self, index))
         self._io_map = bytearray(size)
         cdef char *io_ptr = self._io_map
         return ecx_config_map_group(self._context, <void *>io_ptr, <unsigned char>group)
@@ -694,6 +702,32 @@ cdef class Slave:
     def __cinit__(self, Master master, int index):
         self._master = master
         self._index = index
+
+    @property
+    def config_func(self):
+        return self._master._slave_config_funcs.get(self._index)
+
+    @config_func.setter
+    def config_func(self, callback):
+        if callback is not None and not callable(callback):
+            raise TypeError("config_func must be callable or None")
+        if callback is None:
+            self._master._slave_config_funcs.pop(self._index, None)
+        else:
+            self._master._slave_config_funcs[self._index] = callback
+
+    @property
+    def setup_func(self):
+        return self._master._slave_setup_funcs.get(self._index)
+
+    @setup_func.setter
+    def setup_func(self, callback):
+        if callback is not None and not callable(callback):
+            raise TypeError("setup_func must be callable or None")
+        if callback is None:
+            self._master._slave_setup_funcs.pop(self._index, None)
+        else:
+            self._master._slave_setup_funcs[self._index] = callback
 
     @property
     def index(self):
