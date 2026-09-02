@@ -97,3 +97,18 @@ void soemx_set_packed(ecx_contextt *context, int enabled)
 {
     if (context) context->packedMode = enabled ? TRUE : FALSE;
 }
+
+int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
+                    unsigned short *index, unsigned char *subindex,
+                    int *type, int *abort_code)
+{
+    ec_errort error;
+    if (!context || !slave || !index || !subindex || !type || !abort_code) return 0;
+    if (!ecx_poperror(context, &error)) return 0;
+    *slave = error.Slave;
+    *index = error.Index;
+    *subindex = error.SubIdx;
+    *type = (int)error.Etype;
+    *abort_code = (int)error.AbortCode;
+    return 1;
+}

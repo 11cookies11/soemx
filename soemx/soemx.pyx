@@ -74,6 +74,9 @@ cdef extern from "soemx_native.h":
                             unsigned short *access, char *name, int name_capacity)
     void soemx_set_overlapped(ecx_contextt *context, int enabled)
     void soemx_set_packed(ecx_contextt *context, int enabled)
+    int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
+                        unsigned short *index, unsigned char *subindex,
+                        int *type, int *abort_code)
 
 
 cdef class Master:
@@ -283,6 +286,19 @@ cdef class Master:
         if result <= 0:
             raise TimeoutError("mailbox send failed or timed out")
         return result
+
+    def pop_error(self):
+        """Pop the oldest SOEM error, or return ``None`` when empty."""
+        cdef unsigned short slave = 0
+        cdef unsigned short index = 0
+        cdef unsigned char subindex = 0
+        cdef int error_type = 0
+        cdef int abort_code = 0
+        if not soemx_pop_error(self._context, &slave, &index, &subindex,
+                               &error_type, &abort_code):
+            return None
+        return {"slave": slave, "index": index, "subindex": subindex,
+                "type": error_type, "abort_code": abort_code}
 
     def read_state(self) -> int:
         """Read the state of every configured slave; return slave count."""
