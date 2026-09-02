@@ -16,8 +16,15 @@ The Cython extension currently provides:
 - EoE frame send/receive and raw mailbox transport
 - distributed clocks, DC sync0, overlap/packed mapping and queued errors
 
-The public API is intentionally close to PySOEM, while raw byte-oriented methods
-are used where Python cannot know a device's object data type.
+PySOEM is used as a practical API reference, but `soemx` is free to improve the
+interface where a clearer or safer design is possible. Raw byte-oriented methods
+are used where Python cannot know a device's object data type. In addition to
+normal slave-indexed EEPROM access, the master exposes direct AP and FP EEPROM
+operations for diagnostics.
+
+EoE channels accept any bytes-like frame buffer and expose IPv4 configuration
+through `set_ip()` / `get_ip()`. Emergency mailbox notifications are delivered
+as structured `Emergency` objects through registered callbacks.
 
 ## Build and runtime
 
