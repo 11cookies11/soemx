@@ -547,8 +547,9 @@ cdef class Master:
             raise RuntimeError("master is not open")
         if slave < 1 or slave > self.slave_count:
             raise ValueError("invalid slave")
-        if not isinstance(data, bytes) or not data or len(data) > 1486:
-            raise ValueError("data must be non-empty and fit in a mailbox")
+        if not isinstance(data, (bytes, bytearray, memoryview)) or not data or len(data) > 1486:
+            raise ValueError("data must be a non-empty bytes-like mailbox payload")
+        data = bytes(data)
         if timeout <= 0:
             raise ValueError("timeout must be positive")
         cdef const char *data_ptr = data
@@ -605,8 +606,9 @@ cdef class Master:
             raise RuntimeError("master is not open")
         if slave < 1 or slave > self.slave_count or not 0 <= address <= 0xffff:
             raise ValueError("invalid slave or register address")
-        if not isinstance(data, bytes) or not data or len(data) > 0xffff:
-            raise ValueError("data must be non-empty and fit in a register write")
+        if not isinstance(data, (bytes, bytearray, memoryview)) or not data or len(data) > 0xffff:
+            raise ValueError("data must be a non-empty bytes-like register payload")
+        data = bytes(data)
         if timeout <= 0:
             raise ValueError("timeout must be positive")
         cdef const char *data_ptr = data
