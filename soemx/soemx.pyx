@@ -99,6 +99,12 @@ cdef extern from "soemx_native.h":
     void soemx_set_packed(ecx_contextt *context, int enabled)
     void soemx_set_manual_state_change(ecx_contextt *context, int enabled)
     int soemx_get_manual_state_change(ecx_contextt *context)
+    int soemx_eoe_set_ip(ecx_contextt *context, unsigned short slave, unsigned char port,
+                         const unsigned char *ip, const unsigned char *subnet,
+                         const unsigned char *gateway, int timeout) noexcept nogil
+    int soemx_eoe_get_ip(ecx_contextt *context, unsigned short slave, unsigned char port,
+                         unsigned char *ip, unsigned char *subnet,
+                         unsigned char *gateway, int timeout) noexcept nogil
     int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                         unsigned short *index, unsigned char *subindex,
                         int *type, int *abort_code)
@@ -491,6 +497,46 @@ cdef class Eoe:
         if result <= 0:
             raise TimeoutError("EoE frame send failed or timed out")
         return result
+
+    def set_ip(self, ip: bytes, subnet: bytes = b"\xff\xff\xff\x00",
+               gateway: bytes = b"\x00\x00\x00\x00", timeout: int = 20000) -> int:
+        """Set the EoE IPv4, subnet mask and default gateway (4-byte values)."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        for value, name in ((ip, "ip"), (subnet, "subnet"), (gateway, "gateway")):
+            if not isinstance(value, bytes) or len(value) != 4:
+                raise ValueError(f"{name} must contain exactly four bytes")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        cdef const unsigned char *ip_ptr = ip
+        cdef const unsigned char *subnet_ptr = subnet
+        cdef const unsigned char *gateway_ptr = gateway
+        cdef int timeout_ms = timeout
+        cdef int result
+        with nogil:
+            result = soemx_eoe_set_ip(self._master._context, self._slave, self._port,
+                                      ip_ptr, subnet_ptr, gateway_ptr, timeout_ms)
+        if result <= 0:
+            raise RuntimeError("EoE IP configuration failed")
+        return result
+
+    def get_ip(self, timeout: int = 20000):
+        """Read EoE IPv4, subnet mask and default gateway as 4-byte values."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        cdef unsigned char ip[4]
+        cdef unsigned char subnet[4]
+        cdef unsigned char gateway[4]
+        cdef int timeout_ms = timeout
+        cdef int result
+        with nogil:
+            result = soemx_eoe_get_ip(self._master._context, self._slave, self._port,
+                                      ip, subnet, gateway, timeout_ms)
+        if result <= 0:
+            raise RuntimeError("EoE IP query failed")
+        return bytes(ip), bytes(subnet), bytes(gateway)
 
     def receive(self, max_size: int = 1600, timeout: int = 20000) -> bytes:
         """Receive one reassembled Ethernet frame through EoE."""

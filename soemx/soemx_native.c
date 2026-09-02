@@ -117,6 +117,36 @@ int soemx_get_manual_state_change(ecx_contextt *context)
     return context ? context->manualstatechange : 0;
 }
 
+int soemx_eoe_set_ip(ecx_contextt *context, unsigned short slave, unsigned char port,
+                     const unsigned char *ip, const unsigned char *subnet,
+                     const unsigned char *gateway, int timeout)
+{
+    eoe_param_t param;
+    if (!context || !ip || !subnet || !gateway) return -1;
+    memset(&param, 0, sizeof(param));
+    param.ip_set = 1;
+    param.subnet_set = 1;
+    param.default_gateway_set = 1;
+    memcpy(param.ip.addr, ip, 4);
+    memcpy(param.subnet.addr, subnet, 4);
+    memcpy(param.default_gateway.addr, gateway, 4);
+    return ecx_EOEsetIp(context, slave, port, &param, timeout);
+}
+
+int soemx_eoe_get_ip(ecx_contextt *context, unsigned short slave, unsigned char port,
+                     unsigned char *ip, unsigned char *subnet,
+                     unsigned char *gateway, int timeout)
+{
+    eoe_param_t param;
+    if (!context || !ip || !subnet || !gateway) return -1;
+    memset(&param, 0, sizeof(param));
+    if (ecx_EOEgetIp(context, slave, port, &param, timeout) <= 0) return -1;
+    memcpy(ip, param.ip.addr, 4);
+    memcpy(subnet, param.subnet.addr, 4);
+    memcpy(gateway, param.default_gateway.addr, 4);
+    return 1;
+}
+
 int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                     unsigned short *index, unsigned char *subindex,
                     int *type, int *abort_code)

@@ -38,6 +38,12 @@ void soemx_set_overlapped(ecx_contextt *context, int enabled);
 void soemx_set_packed(ecx_contextt *context, int enabled);
 void soemx_set_manual_state_change(ecx_contextt *context, int enabled);
 int soemx_get_manual_state_change(ecx_contextt *context);
+int soemx_eoe_set_ip(ecx_contextt *context, unsigned short slave, unsigned char port,
+                     const unsigned char *ip, const unsigned char *subnet,
+                     const unsigned char *gateway, int timeout);
+int soemx_eoe_get_ip(ecx_contextt *context, unsigned short slave, unsigned char port,
+                     unsigned char *ip, unsigned char *subnet,
+                     unsigned char *gateway, int timeout);
 int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                     unsigned short *index, unsigned char *subindex,
                     int *type, int *abort_code);
