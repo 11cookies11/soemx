@@ -1,4 +1,4 @@
-from libc.stdint cimport uint16_t, uint32_t
+from libc.stdint cimport uint16_t, uint32_t, int32_t
 from libc.string cimport strlen
 
 cdef extern from "soem/soem.h":
@@ -8,6 +8,12 @@ cdef extern from "soem/soem.h":
     void ecx_close(ecx_contextt *context)
     int ecx_config_init(ecx_contextt *context)
     int ecx_config_map_group(ecx_contextt *context, void *pIOmap, unsigned char group)
+    uint32_t ecx_readeeprom(ecx_contextt *context, uint16_t slave, uint16_t address, int timeout)
+    int ecx_writeeeprom(ecx_contextt *context, uint16_t slave, uint16_t address,
+                        uint16_t data, int timeout)
+    unsigned char ecx_configdc(ecx_contextt *context)
+    void ecx_dcsync0(ecx_contextt *context, uint16_t slave, unsigned char act,
+                     uint32_t cycltime, int32_t cyclshift)
     int ecx_readstate(ecx_contextt *context)
     int ecx_writestate(ecx_contextt *context, uint16_t slave)
     uint16_t ecx_statecheck(ecx_contextt *context, uint16_t slave, uint16_t reqstate, int timeout)
@@ -38,6 +44,7 @@ cdef extern from "soemx_native.h":
     unsigned short soemx_slave_state(ecx_contextt *context, int slave)
     unsigned int soemx_slave_obits(ecx_contextt *context, int slave)
     unsigned int soemx_slave_ibits(ecx_contextt *context, int slave)
+    long long soemx_dc_time(ecx_contextt *context)
 
 
 cdef class Master:
@@ -84,6 +91,44 @@ cdef class Master:
         self._io_map = bytearray(size)
         cdef char *io_ptr = self._io_map
         return ecx_config_map_group(self._context, <void *>io_ptr, <unsigned char>group)
+
+    def read_eeprom(self, slave: int, address: int, timeout: int = 20_000) -> int:
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count or not 0 <= address <= 0xffff:
+            raise ValueError("invalid slave or EEPROM address")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        return ecx_readeeprom(self._context, <uint16_t>slave, <uint16_t>address, timeout)
+
+    def write_eeprom(self, slave: int, address: int, data: int,
+                     timeout: int = 20_000) -> int:
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count or not 0 <= address <= 0xffff:
+            raise ValueError("invalid slave or EEPROM address")
+        if not 0 <= data <= 0xffff or timeout <= 0:
+            raise ValueError("invalid EEPROM data or timeout")
+        return ecx_writeeeprom(self._context, <uint16_t>slave, <uint16_t>address,
+                               <uint16_t>data, timeout)
+
+    def config_dc(self) -> bool:
+        if not self._open:
+            raise RuntimeError("master is not open")
+        return bool(ecx_configdc(self._context))
+
+    @property
+    def dc_time(self) -> int:
+        return soemx_dc_time(self._context)
+
+    def dc_sync0(self, slave: int, cycle_time: int, active: bool = True,
+                 cycle_shift: int = 0):
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count or cycle_time <= 0:
+            raise ValueError("invalid slave or cycle time")
+        ecx_dcsync0(self._context, <uint16_t>slave, <unsigned char>active,
+                    <uint32_t>cycle_time, <int32_t>cycle_shift)
 
     @property
     def io_map(self):
