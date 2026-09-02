@@ -351,6 +351,10 @@ cdef class Master:
             raise RuntimeError("master is not open or PDO map is not configured")
         return ecx_send_processdata(self._context)
 
+    def send_overlap_processdata(self) -> int:
+        """Send process data through the overlap-map compatible entry point."""
+        return self.send_processdata()
+
     def receive_processdata(self, timeout: int = 2_000_000) -> int:
         if not self._open or self._io_map is None:
             raise RuntimeError("master is not open or PDO map is not configured")
@@ -806,6 +810,10 @@ cdef class Slave:
 
     def write_state(self) -> int:
         return self._master.write_state(self._index)
+
+    def mbx_receive(self, size: int = 2048, timeout: int = 20_000) -> bytes:
+        """Receive one raw mailbox frame from this slave."""
+        return self._master.mailbox_receive(self._index, size, timeout)
 
     def dc_sync(self, active: bool, sync0_cycle_time: int,
                 sync0_shift_time: int = 0, sync1_cycle_time=None):
