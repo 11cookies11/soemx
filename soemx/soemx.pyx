@@ -63,6 +63,10 @@ cdef extern from "soemx_native.h":
                             unsigned short *index, unsigned short *datatype,
                             unsigned char *object_code, unsigned char *max_sub,
                             char *name, int name_capacity)
+    int soemx_read_oe_entry(ecx_contextt *context, unsigned short slave, int object,
+                            int entry, unsigned char *value_info,
+                            unsigned short *datatype, unsigned short *bit_length,
+                            unsigned short *access, char *name, int name_capacity)
 
 
 cdef class Master:
@@ -391,6 +395,33 @@ cdef class Slave:
                                 name, 41)
             result.append({"index": index, "data_type": datatype,
                            "object_code": object_code, "max_subindex": max_sub,
+                           "name": bytes(name).split(b"\0", 1)[0]})
+        return result
+
+    def sdo_entries(self, object: int):
+        """Read sub-entry metadata for an object dictionary entry."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        if object < 0:
+            raise ValueError("object must be non-negative")
+        cdef unsigned char value_info = 0
+        cdef unsigned short datatype = 0
+        cdef unsigned short bit_length = 0
+        cdef unsigned short access = 0
+        cdef char name[41]
+        cdef int count = soemx_read_oe_entry(self._master._context, self._index,
+                                             object, -1, &value_info, &datatype,
+                                             &bit_length, &access, name, 41)
+        if count <= 0:
+            raise RuntimeError("SDO entry info read failed")
+        result = []
+        for entry in range(count):
+            soemx_read_oe_entry(self._master._context, self._index, object, entry,
+                                &value_info, &datatype, &bit_length, &access,
+                                name, 41)
+            result.append({"subindex": entry, "value_info": value_info,
+                           "data_type": datatype, "bit_length": bit_length,
+                           "access": access,
                            "name": bytes(name).split(b"\0", 1)[0]})
         return result
 

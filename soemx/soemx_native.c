@@ -55,3 +55,25 @@ int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
     strncpy_s(name, (size_t)name_capacity, od.Name[entry], _TRUNCATE);
     return count;
 }
+
+int soemx_read_oe_entry(ecx_contextt *context, unsigned short slave, int object,
+                        int entry, unsigned char *value_info,
+                        unsigned short *datatype, unsigned short *bit_length,
+                        unsigned short *access, char *name, int name_capacity)
+{
+    ec_ODlistt od;
+    ec_OElistt oe;
+    int result;
+    if (!context || !value_info || !datatype || !bit_length || !access || !name) return -1;
+    memset(&od, 0, sizeof(od));
+    memset(&oe, 0, sizeof(oe));
+    if (ecx_readODlist(context, slave, &od) <= 0 || object < 0 || object >= od.Entries) return -1;
+    result = ecx_readOEsingle(context, (uint16)object, (uint8)entry, &od, &oe);
+    if (result <= 0 || entry < 0 || entry >= oe.Entries) return result;
+    *value_info = oe.ValueInfo[entry];
+    *datatype = oe.DataType[entry];
+    *bit_length = oe.BitLength[entry];
+    *access = oe.ObjAccess[entry];
+    strncpy_s(name, (size_t)name_capacity, oe.Name[entry], _TRUNCATE);
+    return oe.Entries;
+}

@@ -19,3 +19,7 @@ int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
                         unsigned short *index, unsigned short *datatype,
                         unsigned char *object_code, unsigned char *max_sub,
                         char *name, int name_capacity);
+int soemx_read_oe_entry(ecx_contextt *context, unsigned short slave, int object,
+                        int entry, unsigned char *value_info,
+                        unsigned short *datatype, unsigned short *bit_length,
+                        unsigned short *access, char *name, int name_capacity);
