@@ -1,4 +1,4 @@
-from libc.stdint cimport uint16_t, uint32_t, int32_t
+from libc.stdint cimport uint16_t, uint32_t, uint64_t, int32_t
 from libc.string cimport strlen
 import warnings
 from .errors import Emergency
@@ -120,7 +120,15 @@ cdef extern from "soemx_native.h":
     int soemx_read_register(ecx_contextt *context, unsigned short slave,
                             unsigned short address, void *buffer, int size, int timeout) noexcept nogil
     int soemx_write_register(ecx_contextt *context, unsigned short slave,
-                             unsigned short address, const void *buffer, int size, int timeout) noexcept nogil
+                            unsigned short address, const void *buffer, int size, int timeout) noexcept nogil
+    unsigned long long soemx_read_eeprom_ap(ecx_contextt *context, unsigned short address,
+                                            unsigned short word, int timeout) noexcept nogil
+    int soemx_write_eeprom_ap(ecx_contextt *context, unsigned short address,
+                              unsigned short word, unsigned short data, int timeout) noexcept nogil
+    unsigned long long soemx_read_eeprom_fp(ecx_contextt *context, unsigned short config_address,
+                                            unsigned short word, int timeout) noexcept nogil
+    int soemx_write_eeprom_fp(ecx_contextt *context, unsigned short config_address,
+                              unsigned short word, unsigned short data, int timeout) noexcept nogil
     int soemx_amend_mailbox(ecx_contextt *context, unsigned short slave, int mailbox,
                             unsigned short start_address, unsigned short size) noexcept nogil
     int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
@@ -313,6 +321,43 @@ cdef class Master:
             raise ValueError("invalid EEPROM data or timeout")
         return ecx_writeeeprom(self._context, <uint16_t>slave, <uint16_t>address,
                                <uint16_t>data, timeout)
+
+    def read_eeprom_ap(self, address: int, word: int, timeout: int = 20_000) -> int:
+        """Read an EEPROM word through an Auto-Increment address."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if not 0 <= address <= 0xffff or not 0 <= word <= 0xffff or timeout <= 0:
+            raise ValueError("invalid EEPROM address, word, or timeout")
+        return soemx_read_eeprom_ap(self._context, <uint16_t>address,
+                                    <uint16_t>word, timeout)
+
+    def write_eeprom_ap(self, address: int, word: int, data: int,
+                        timeout: int = 20_000) -> int:
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if not 0 <= address <= 0xffff or not 0 <= word <= 0xffff or not 0 <= data <= 0xffff or timeout <= 0:
+            raise ValueError("invalid EEPROM address, word, data, or timeout")
+        return soemx_write_eeprom_ap(self._context, <uint16_t>address,
+                                     <uint16_t>word, <uint16_t>data, timeout)
+
+    def read_eeprom_fp(self, config_address: int, word: int,
+                       timeout: int = 20_000) -> int:
+        """Read an EEPROM word through a Configured Address."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if not 0 <= config_address <= 0xffff or not 0 <= word <= 0xffff or timeout <= 0:
+            raise ValueError("invalid config address, word, or timeout")
+        return soemx_read_eeprom_fp(self._context, <uint16_t>config_address,
+                                    <uint16_t>word, timeout)
+
+    def write_eeprom_fp(self, config_address: int, word: int, data: int,
+                        timeout: int = 20_000) -> int:
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if not 0 <= config_address <= 0xffff or not 0 <= word <= 0xffff or not 0 <= data <= 0xffff or timeout <= 0:
+            raise ValueError("invalid config address, word, data, or timeout")
+        return soemx_write_eeprom_fp(self._context, <uint16_t>config_address,
+                                     <uint16_t>word, <uint16_t>data, timeout)
 
     def eeprom_to_master(self, slave: int) -> int:
         """Give the EtherCAT master control of a slave's EEPROM."""

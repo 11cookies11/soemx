@@ -198,6 +198,34 @@ int soemx_write_register(ecx_contextt *context, unsigned short slave,
                     address, (uint16)size, (void *)buffer, timeout);
 }
 
+unsigned long long soemx_read_eeprom_ap(ecx_contextt *context, unsigned short address,
+                                        unsigned short word, int timeout)
+{
+    if (!context || timeout <= 0) return 0;
+    return (unsigned long long)ecx_readeepromAP(context, address, word, timeout);
+}
+
+int soemx_write_eeprom_ap(ecx_contextt *context, unsigned short address,
+                          unsigned short word, unsigned short data, int timeout)
+{
+    if (!context || timeout <= 0) return 0;
+    return ecx_writeeepromAP(context, address, word, data, timeout);
+}
+
+unsigned long long soemx_read_eeprom_fp(ecx_contextt *context, unsigned short config_address,
+                                        unsigned short word, int timeout)
+{
+    if (!context || timeout <= 0) return 0;
+    return (unsigned long long)ecx_readeepromFP(context, config_address, word, timeout);
+}
+
+int soemx_write_eeprom_fp(ecx_contextt *context, unsigned short config_address,
+                          unsigned short word, unsigned short data, int timeout)
+{
+    if (!context || timeout <= 0) return 0;
+    return ecx_writeeepromFP(context, config_address, word, data, timeout);
+}
+
 int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                     unsigned short *index, unsigned char *subindex,
                     int *type, int *abort_code, unsigned char *error_reg,
