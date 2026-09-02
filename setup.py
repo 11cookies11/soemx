@@ -29,5 +29,6 @@ for ext in extensions:
 
 setup(
     ext_modules=extensions,
+    include_package_data=False,
     exclude_package_data={"soemx": ["*.c", "*.h"]},
 )
