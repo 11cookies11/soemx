@@ -328,6 +328,15 @@ cdef class Master:
         return {"slave": slave, "index": index, "subindex": subindex,
                 "type": error_type, "abort_code": abort_code}
 
+    def errors(self):
+        """Return all currently queued SOEM errors in FIFO order."""
+        result = []
+        while True:
+            error = self.pop_error()
+            if error is None:
+                return result
+            result.append(error)
+
     def read_state(self) -> int:
         """Read the state of every configured slave; return slave count."""
         if not self._open:
