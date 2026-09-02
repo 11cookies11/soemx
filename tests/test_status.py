@@ -1,5 +1,6 @@
 from soemx.status import al_status_code_to_string
 from soemx import ECT_COEDET_SDO, ECT_REG_SM0, ECT_REG_SM1
+from soemx import Emergency
 
 
 def test_known_al_status():
@@ -14,3 +15,11 @@ def test_common_pysoem_constants():
     assert ECT_COEDET_SDO == 0x01
     assert ECT_REG_SM0 == 0x0800
     assert ECT_REG_SM1 == 0x0808
+
+
+def test_emergency_notification_fields():
+    notification = Emergency(1, 0x1000, 0x01, 2, 3, 4)
+    assert notification.slave == 1
+    assert notification.error_code == 0x1000
+    assert notification.error_register == 0x01
+    assert (notification.b1, notification.w1, notification.w2) == (2, 3, 4)

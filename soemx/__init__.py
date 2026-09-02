@@ -2,7 +2,7 @@
 
 from .errors import (SoemxError, SdoError, SdoInfoError, MailboxError,
                      PacketError, ConfigMapError, EepromError, WkcError,
-                     NetworkInterfaceNotOpenError)
+                     NetworkInterfaceNotOpenError, Emergency)
 from .status import al_status_code_to_string
 
 NONE_STATE = 0x00
@@ -48,7 +48,7 @@ def open(interface: str):
         raise
     return master
 
-__all__ = ["Master", "find_adapters", "open", "__version__", "al_status_code_to_string", "SoemxError", "SdoError", "SdoInfoError",
+__all__ = ["Master", "find_adapters", "open", "__version__", "al_status_code_to_string", "SoemxError", "SdoError", "SdoInfoError", "Emergency",
            "MailboxError", "PacketError", "ConfigMapError", "EepromError",
            "WkcError", "NetworkInterfaceNotOpenError", "NONE_STATE", "INIT_STATE",
            "PREOP_STATE", "BOOT_STATE", "SAFEOP_STATE", "OP_STATE",
