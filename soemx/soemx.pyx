@@ -255,6 +255,13 @@ cdef class Master:
             raise RuntimeError("master is not open")
         if size <= 0 or group < 0 or group > 255:
             raise ValueError("invalid IO map size or group")
+        for index in range(1, self.slave_count + 1):
+            callback = self._slave_config_funcs.get(index, self._setup_func)
+            setup_callback = self._slave_setup_funcs.get(index)
+            if callback is not None:
+                callback(Slave(self, index))
+            if setup_callback is not None:
+                setup_callback(Slave(self, index))
         self._io_map = bytearray(size)
         soemx_set_overlapped(self._context, 1)
         cdef char *io_ptr = self._io_map
