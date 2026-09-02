@@ -7,6 +7,9 @@ cdef extern from "soem/soem.h":
     int ecx_init(ecx_contextt *context, const char *ifname)
     void ecx_close(ecx_contextt *context)
     int ecx_config_init(ecx_contextt *context)
+    int ecx_readstate(ecx_contextt *context)
+    int ecx_writestate(ecx_contextt *context, uint16_t slave)
+    uint16_t ecx_statecheck(ecx_contextt *context, uint16_t slave, uint16_t reqstate, int timeout)
     int ecx_EOEsend(ecx_contextt *context, uint16_t slave, unsigned char port,
                     int psize, void *p, int timeout) noexcept nogil
     int ecx_EOErecv(ecx_contextt *context, uint16_t slave, unsigned char port,
@@ -57,6 +60,31 @@ cdef class Master:
         if not self._open:
             raise RuntimeError("master is not open")
         return ecx_config_init(self._context)
+
+    def read_state(self) -> int:
+        """Read the state of every configured slave; return slave count."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        return ecx_readstate(self._context)
+
+    def write_state(self, slave: int = 0) -> int:
+        """Request a state change. ``slave=0`` addresses all slaves."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 0 or slave > self.slave_count:
+            raise IndexError("slave index out of range")
+        return ecx_writestate(self._context, <uint16_t>slave)
+
+    def state_check(self, state: int, slave: int = 0, timeout: int = 2_000_000) -> int:
+        """Wait for a slave (or all slaves) to reach ``state``."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 0 or slave > self.slave_count:
+            raise IndexError("slave index out of range")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        return ecx_statecheck(self._context, <uint16_t>slave,
+                              <uint16_t>state, timeout)
 
     @property
     def slave_count(self) -> int:
