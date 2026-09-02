@@ -15,6 +15,8 @@ unsigned int soemx_slave_ibits(ecx_contextt *context, int slave);
 long long soemx_dc_time(ecx_contextt *context);
 int soemx_mailbox_receive(ecx_contextt *context, unsigned short slave,
                           int timeout, void *buffer, int capacity);
+int soemx_mailbox_send(ecx_contextt *context, unsigned short slave,
+                       const void *buffer, int size, int timeout);
 int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
                         unsigned short *index, unsigned short *datatype,
                         unsigned char *object_code, unsigned char *max_sub,

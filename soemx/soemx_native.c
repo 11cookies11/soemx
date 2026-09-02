@@ -35,6 +35,16 @@ int soemx_mailbox_receive(ecx_contextt *context, unsigned short slave,
     return result;
 }
 
+int soemx_mailbox_send(ecx_contextt *context, unsigned short slave,
+                       const void *buffer, int size, int timeout)
+{
+    ec_mbxbuft mailbox;
+    if (!context || !buffer || size <= 0 || size > EC_MAXMBX) return -1;
+    memset(mailbox, 0, sizeof(mailbox));
+    memcpy(mailbox, buffer, (size_t)size);
+    return ecx_mbxsend(context, slave, &mailbox, timeout);
+}
+
 int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
                         unsigned short *index, unsigned short *datatype,
                         unsigned char *object_code, unsigned char *max_sub,

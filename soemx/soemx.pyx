@@ -59,6 +59,8 @@ cdef extern from "soemx_native.h":
     long long soemx_dc_time(ecx_contextt *context)
     int soemx_mailbox_receive(ecx_contextt *context, unsigned short slave,
                               int timeout, void *buffer, int capacity) noexcept nogil
+    int soemx_mailbox_send(ecx_contextt *context, unsigned short slave,
+                           const void *buffer, int size, int timeout) noexcept nogil
     int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
                             unsigned short *index, unsigned short *datatype,
                             unsigned char *object_code, unsigned char *max_sub,
@@ -212,6 +214,29 @@ cdef class Master:
         if result <= 0:
             raise TimeoutError("mailbox receive failed or timed out")
         return bytes(buffer[:result])
+
+    def mailbox_send(self, slave: int, data: bytes, timeout: int = 20_000) -> int:
+        """Send a raw mailbox buffer."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count:
+            raise ValueError("invalid slave")
+        if not isinstance(data, bytes) or not data or len(data) > 1486:
+            raise ValueError("data must be non-empty and fit in a mailbox")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        cdef const char *data_ptr = data
+        cdef unsigned short slave_id = <unsigned short>slave
+        cdef int data_size = len(data)
+        cdef int timeout_ms = timeout
+        cdef int result
+        with nogil:
+            result = soemx_mailbox_send(self._context, slave_id,
+                                        <const void *>data_ptr, data_size,
+                                        timeout_ms)
+        if result <= 0:
+            raise TimeoutError("mailbox send failed or timed out")
+        return result
 
     def read_state(self) -> int:
         """Read the state of every configured slave; return slave count."""
