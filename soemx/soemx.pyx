@@ -25,6 +25,9 @@ cdef extern from "soem/soem.h":
     uint16_t ecx_statecheck(ecx_contextt *context, uint16_t slave, uint16_t reqstate, int timeout)
     int ecx_send_processdata(ecx_contextt *context) noexcept nogil
     int ecx_receive_processdata(ecx_contextt *context, int timeout) noexcept nogil
+    int ecx_send_processdata_group(ecx_contextt *context, unsigned char group) noexcept nogil
+    int ecx_receive_processdata_group(ecx_contextt *context, unsigned char group,
+                                      int timeout) noexcept nogil
     int ecx_SDOread(ecx_contextt *context, uint16_t slave, uint16_t index,
                     unsigned char subindex, unsigned char CA, int *psize,
                     void *p, int timeout) noexcept nogil
@@ -193,6 +196,30 @@ cdef class Master:
         cdef int result
         with nogil:
             result = ecx_receive_processdata(self._context, timeout_us)
+        return result
+
+    def send_processdata_group(self, group: int = 0) -> int:
+        if not self._open or self._io_map is None:
+            raise RuntimeError("master is not open or PDO map is not configured")
+        if group < 0 or group > 255:
+            raise ValueError("group must be between 0 and 255")
+        cdef unsigned char group_id = <unsigned char>group
+        cdef int result
+        with nogil:
+            result = ecx_send_processdata_group(self._context, group_id)
+        return result
+
+    def receive_processdata_group(self, group: int = 0,
+                                  timeout: int = 2_000_000) -> int:
+        if not self._open or self._io_map is None:
+            raise RuntimeError("master is not open or PDO map is not configured")
+        if group < 0 or group > 255 or timeout <= 0:
+            raise ValueError("invalid group or timeout")
+        cdef unsigned char group_id = <unsigned char>group
+        cdef int timeout_us = timeout
+        cdef int result
+        with nogil:
+            result = ecx_receive_processdata_group(self._context, group_id, timeout_us)
         return result
 
     def mailbox_receive(self, slave: int, size: int = 2048,
