@@ -120,6 +120,8 @@ cdef extern from "soemx_native.h":
                             unsigned short address, void *buffer, int size, int timeout) noexcept nogil
     int soemx_write_register(ecx_contextt *context, unsigned short slave,
                              unsigned short address, const void *buffer, int size, int timeout) noexcept nogil
+    int soemx_amend_mailbox(ecx_contextt *context, unsigned short slave,
+                            unsigned short start_address, unsigned short size) noexcept nogil
     int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                         unsigned short *index, unsigned char *subindex,
                         int *type, int *abort_code)
@@ -813,6 +815,15 @@ cdef class Slave:
         return self._master.dc_sync01(self._index, sync0_cycle_time,
                                       sync1_cycle_time, active,
                                       sync0_shift_time)
+
+    def amend_mbx(self, mailbox, start_address: int, size: int):
+        """Override the configured mailbox address and size."""
+        if mailbox not in ("rx", "tx"):
+            raise ValueError("mailbox must be 'rx' or 'tx'")
+        if not 0 <= start_address <= 0xFFFF or not 1 <= size <= 0xFFFF:
+            raise ValueError("invalid mailbox address or size")
+        return bool(soemx_amend_mailbox(self._master._context, self._index,
+                                        start_address, size))
 
     def _watchdog_register(self, wd_type):
         if wd_type == "pdi":

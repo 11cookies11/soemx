@@ -73,6 +73,18 @@ int soemx_mailbox_send(ecx_contextt *context, unsigned short slave,
     return ecx_mbxsend(context, slave, &mailbox, timeout);
 }
 
+int soemx_amend_mailbox(ecx_contextt *context, unsigned short slave,
+                        unsigned short start_address, unsigned short size)
+{
+    if (!context || slave == 0 || slave >= EC_MAXSLAVE || size == 0)
+        return 0;
+    context->slavelist[slave].mbx_wo = start_address;
+    context->slavelist[slave].mbx_ro = start_address;
+    context->slavelist[slave].mbx_l = size;
+    context->slavelist[slave].mbx_rl = size;
+    return 1;
+}
+
 int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
                         unsigned short *index, unsigned short *datatype,
                         unsigned char *object_code, unsigned char *max_sub,
