@@ -17,6 +17,8 @@ cdef extern from "soem/soem.h":
     uint32_t ecx_readeeprom(ecx_contextt *context, uint16_t slave, uint16_t address, int timeout)
     int ecx_writeeeprom(ecx_contextt *context, uint16_t slave, uint16_t address,
                         uint16_t data, int timeout)
+    int ecx_eeprom2master(ecx_contextt *context, uint16_t slave)
+    int ecx_eeprom2pdi(ecx_contextt *context, uint16_t slave)
     unsigned char ecx_configdc(ecx_contextt *context)
     void ecx_dcsync0(ecx_contextt *context, uint16_t slave, unsigned char act,
                      uint32_t cycltime, int32_t cyclshift)
@@ -221,6 +223,22 @@ cdef class Master:
             raise ValueError("invalid EEPROM data or timeout")
         return ecx_writeeeprom(self._context, <uint16_t>slave, <uint16_t>address,
                                <uint16_t>data, timeout)
+
+    def eeprom_to_master(self, slave: int) -> int:
+        """Give the EtherCAT master control of a slave's EEPROM."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count:
+            raise IndexError("slave index out of range")
+        return ecx_eeprom2master(self._context, <uint16_t>slave)
+
+    def eeprom_to_pdi(self, slave: int) -> int:
+        """Return a slave's EEPROM control to its PDI."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count:
+            raise IndexError("slave index out of range")
+        return ecx_eeprom2pdi(self._context, <uint16_t>slave)
 
     def config_dc(self) -> bool:
         if not self._open:
