@@ -19,6 +19,7 @@ The Cython extension currently provides:
 - distributed clocks, DC sync0, overlap/packed mapping and queued errors
 - parsed slave mailbox parameters (`mailbox_out_address`, `mailbox_out_size`,
   `mailbox_in_address`, `mailbox_in_size`) for diagnostics
+- mailbox layout updates through `Slave.amend_mbx()` before mailbox use
 
 PySOEM is used as a practical API reference, but `soemx` is free to improve the
 interface where a clearer or safer design is possible. Raw byte-oriented methods

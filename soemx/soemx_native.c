@@ -44,6 +44,19 @@ unsigned short soemx_slave_mbx_out_address(ecx_contextt *context, int slave) { r
 unsigned short soemx_slave_mbx_out_size(ecx_contextt *context, int slave) { return context->slavelist[slave].mbx_l; }
 unsigned short soemx_slave_mbx_in_address(ecx_contextt *context, int slave) { return context->slavelist[slave].mbx_ro; }
 unsigned short soemx_slave_mbx_in_size(ecx_contextt *context, int slave) { return context->slavelist[slave].mbx_rl; }
+int soemx_slave_amend_mbx(ecx_contextt *context, int slave, int mailbox,
+                          unsigned short address, unsigned short size) {
+    if (mailbox == 0) {
+        context->slavelist[slave].mbx_wo = address;
+        context->slavelist[slave].mbx_l = size;
+    } else if (mailbox == 1) {
+        context->slavelist[slave].mbx_ro = address;
+        context->slavelist[slave].mbx_rl = size;
+    } else {
+        return 0;
+    }
+    return 1;
+}
 unsigned short soemx_slave_state(ecx_contextt *context, int slave) { return context->slavelist[slave].state; }
 unsigned short soemx_slave_al_status(ecx_contextt *context, int slave) { return context->slavelist[slave].ALstatuscode; }
 int soemx_slave_has_dc(ecx_contextt *context, int slave) { return context->slavelist[slave].hasdc ? 1 : 0; }

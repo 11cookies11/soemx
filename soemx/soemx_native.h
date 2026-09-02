@@ -25,6 +25,8 @@ unsigned short soemx_slave_mbx_out_address(ecx_contextt *context, int slave);
 unsigned short soemx_slave_mbx_out_size(ecx_contextt *context, int slave);
 unsigned short soemx_slave_mbx_in_address(ecx_contextt *context, int slave);
 unsigned short soemx_slave_mbx_in_size(ecx_contextt *context, int slave);
+int soemx_slave_amend_mbx(ecx_contextt *context, int slave, int mailbox,
+                          unsigned short address, unsigned short size);
 unsigned short soemx_slave_state(ecx_contextt *context, int slave);
 unsigned short soemx_slave_al_status(ecx_contextt *context, int slave);
 int soemx_slave_has_dc(ecx_contextt *context, int slave);
