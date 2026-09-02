@@ -1586,7 +1586,7 @@ cdef class Slave:
         if timeout <= 0:
             raise ValueError("timeout must be positive")
         cdef const char *data_ptr = data
-        cdef int data_size = len(data)
+        cdef int data_size = <int>len(data)
         cdef int timeout_ms = timeout
         cdef unsigned char drive_no = <unsigned char>drive
         cdef unsigned char flags = <unsigned char>element_flags
