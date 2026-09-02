@@ -30,16 +30,27 @@ ECT_COEDET_SDOCA = 0x20
 __version__ = "0.1.0.dev0"
 
 
+def _load_native():
+    try:
+        from . import _soemx
+    except ImportError as exc:
+        raise RuntimeError(
+            "unable to load the soemx native extension; install Npcap "
+            "with WinPcap API-compatible mode on Windows"
+        ) from exc
+    return _soemx
+
+
 def __getattr__(name):
     if name in ("Master", "find_adapters"):
-        from ._soemx import Master, find_adapters
-        return Master if name == "Master" else find_adapters
+        native = _load_native()
+        return native.Master if name == "Master" else native.find_adapters
     raise AttributeError(name)
 
 
 def open(interface: str, interface2=None):
     """Open an EtherCAT master and optionally configure a redundant interface."""
-    from ._soemx import Master
+    Master = _load_native().Master
     master = Master()
     try:
         master.open(interface, interface2)
