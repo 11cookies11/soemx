@@ -650,12 +650,21 @@ cdef class Eoe:
         self._slave = <uint16_t>slave
         self._port = <unsigned char>port
 
+    @property
+    def slave(self):
+        return self._slave
+
+    @property
+    def port(self):
+        return self._port
+
     def send(self, data: bytes, timeout: int = 20000) -> int:
         """Send one Ethernet frame through EoE; return SOEM's result code."""
         if not self._master._open:
             raise RuntimeError("master is not open")
-        if not isinstance(data, bytes):
-            raise TypeError("data must be bytes")
+        if not isinstance(data, (bytes, bytearray, memoryview)):
+            raise TypeError("data must be a bytes-like object")
+        data = bytes(data)
         if len(data) == 0:
             raise ValueError("data must not be empty")
         if timeout <= 0:
@@ -677,8 +686,11 @@ cdef class Eoe:
         if not self._master._open:
             raise RuntimeError("master is not open")
         for value, name in ((ip, "ip"), (subnet, "subnet"), (gateway, "gateway")):
-            if not isinstance(value, bytes) or len(value) != 4:
+            if not isinstance(value, (bytes, bytearray, memoryview)) or len(value) != 4:
                 raise ValueError(f"{name} must contain exactly four bytes")
+        ip = bytes(ip)
+        subnet = bytes(subnet)
+        gateway = bytes(gateway)
         if timeout <= 0:
             raise ValueError("timeout must be positive")
         cdef const unsigned char *ip_ptr = ip
