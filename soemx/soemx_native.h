@@ -59,4 +59,5 @@ int soemx_amend_mailbox(ecx_contextt *context, unsigned short slave, int mailbox
                         unsigned short start_address, unsigned short size);
 int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                     unsigned short *index, unsigned char *subindex,
-                    int *type, int *abort_code);
+                    int *type, int *abort_code, unsigned char *error_reg,
+                    unsigned char *b1, unsigned short *w1, unsigned short *w2);

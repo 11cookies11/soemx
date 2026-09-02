@@ -1,6 +1,7 @@
 from libc.stdint cimport uint16_t, uint32_t, int32_t
 from libc.string cimport strlen
 import warnings
+from .errors import Emergency
 
 cdef extern from "soem/soem.h":
     ctypedef struct ec_adaptert:
@@ -124,7 +125,8 @@ cdef extern from "soemx_native.h":
                             unsigned short start_address, unsigned short size) noexcept nogil
     int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                         unsigned short *index, unsigned char *subindex,
-                        int *type, int *abort_code)
+                        int *type, int *abort_code, unsigned char *error_reg,
+                        unsigned char *b1, unsigned short *w1, unsigned short *w2)
 
 
 cdef class Master:
@@ -510,14 +512,20 @@ cdef class Master:
         cdef unsigned char subindex = 0
         cdef int error_type = 0
         cdef int abort_code = 0
+        cdef unsigned char error_reg = 0
+        cdef unsigned char b1 = 0
+        cdef unsigned short w1 = 0
+        cdef unsigned short w2 = 0
         if not soemx_pop_error(self._context, &slave, &index, &subindex,
-                               &error_type, &abort_code):
+                               &error_type, &abort_code, &error_reg, &b1,
+                               &w1, &w2):
             return None
         error = {"slave": slave, "index": index, "subindex": subindex,
                  "type": error_type, "abort_code": abort_code}
         if error_type == 1:
+            notification = Emergency(slave, abort_code, error_reg, b1, w1, w2)
             for callback in self._emergency_callbacks:
-                callback(error)
+                callback(notification)
         return error
 
     def add_emergency_callback(self, callback):

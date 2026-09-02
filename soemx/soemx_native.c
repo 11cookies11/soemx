@@ -200,15 +200,21 @@ int soemx_write_register(ecx_contextt *context, unsigned short slave,
 
 int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                     unsigned short *index, unsigned char *subindex,
-                    int *type, int *abort_code)
+                    int *type, int *abort_code, unsigned char *error_reg,
+                    unsigned char *b1, unsigned short *w1, unsigned short *w2)
 {
     ec_errort error;
-    if (!context || !slave || !index || !subindex || !type || !abort_code) return 0;
+    if (!context || !slave || !index || !subindex || !type || !abort_code ||
+        !error_reg || !b1 || !w1 || !w2) return 0;
     if (!ecx_poperror(context, &error)) return 0;
     *slave = error.Slave;
     *index = error.Index;
     *subindex = error.SubIdx;
     *type = (int)error.Etype;
     *abort_code = (int)error.AbortCode;
+    *error_reg = error.ErrorReg;
+    *b1 = error.b1;
+    *w1 = error.w1;
+    *w2 = error.w2;
     return 1;
 }
