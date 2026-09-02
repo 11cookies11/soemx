@@ -43,6 +43,9 @@ python setup.py build_ext --inplace
 python -m pytest -q
 ```
 
+Linux builds use SOEM's raw-socket backend and require the system `libpcap`
+development package and a compiler.
+
 The Windows backend links against Npcap/WinPcap's `wpcap.dll` and `Packet.dll`.
 These DLLs are required when opening a network adapter, but pure Python modules
 and the test suite can be used without EtherCAT hardware or the packet runtime.
