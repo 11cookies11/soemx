@@ -221,6 +221,8 @@ cdef class Master:
             self._open = False
         self._io_map = None
         self._mapped_size = 0
+        self._in_op = False
+        self._do_check_state = False
 
     def config_init(self) -> int:
         if not self._open:
@@ -228,6 +230,8 @@ cdef class Master:
         count = ecx_config_init(self._context)
         self._io_map = None
         self._mapped_size = 0
+        self._in_op = False
+        self._do_check_state = False
         return count
 
     @property
