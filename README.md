@@ -29,7 +29,7 @@ operations for diagnostics.
 
 EoE channels accept any bytes-like frame buffer and expose IPv4 configuration
 through `set_ip()` / `get_ip()`. Emergency mailbox notifications are delivered
-as structured `Emergency` objects through registered callbacks.
+as structured `Emergency` objects through Master-level or per-slave callbacks.
 
 ## Build and runtime
 

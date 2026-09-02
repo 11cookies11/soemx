@@ -157,6 +157,7 @@ cdef class Master:
     cdef dict _slave_config_funcs
     cdef dict _slave_setup_funcs
     cdef list _emergency_callbacks
+    cdef dict _slave_emergency_callbacks
     cdef bint _in_op
     cdef bint _do_check_state
 
@@ -170,6 +171,7 @@ cdef class Master:
         self._slave_config_funcs = {}
         self._slave_setup_funcs = {}
         self._emergency_callbacks = []
+        self._slave_emergency_callbacks = {}
         self._in_op = False
         self._do_check_state = False
         if self._context == NULL or self._redport == NULL:
@@ -248,12 +250,14 @@ cdef class Master:
         self._do_check_state = False
         self._interface = None
         self._interface2 = None
+        self._slave_emergency_callbacks.clear()
 
     def config_init(self) -> int:
         if not self._open:
             raise RuntimeError("master is not open")
         self._slave_config_funcs.clear()
         self._slave_setup_funcs.clear()
+        self._slave_emergency_callbacks.clear()
         count = ecx_config_init(self._context)
         self._io_map = None
         self._mapped_size = 0
@@ -653,6 +657,8 @@ cdef class Master:
             notification = Emergency(slave, abort_code, error_reg, b1, w1, w2)
             for callback in self._emergency_callbacks:
                 callback(notification)
+            for callback in self._slave_emergency_callbacks.get(slave, ()):
+                callback(notification)
         return error
 
     @property
@@ -924,6 +930,30 @@ cdef class Slave:
             self._master._slave_setup_funcs.pop(self._index, None)
         else:
             self._master._slave_setup_funcs[self._index] = callback
+
+    def add_emergency_callback(self, callback):
+        """Register a callback for emergency messages from this slave."""
+        if not callable(callback):
+            raise TypeError("callback must be callable")
+        self._master._slave_emergency_callbacks.setdefault(self._index, []).append(callback)
+
+    def remove_emergency_callback(self, callback):
+        """Remove a callback registered on this slave."""
+        callbacks = self._master._slave_emergency_callbacks.get(self._index)
+        if not callbacks:
+            return False
+        try:
+            callbacks.remove(callback)
+        except ValueError:
+            return False
+        if not callbacks:
+            self._master._slave_emergency_callbacks.pop(self._index, None)
+        return True
+
+    def clear_emergency_callbacks(self):
+        """Remove all emergency callbacks registered on this slave."""
+        callbacks = self._master._slave_emergency_callbacks.pop(self._index, [])
+        return len(callbacks)
 
     @property
     def index(self):
