@@ -456,6 +456,11 @@ cdef class Master:
             result = ecx_receive_processdata(self._context, timeout_us)
         return result
 
+    def exchange_processdata(self, timeout: int = 2_000_000) -> int:
+        """Send the current IO map and wait for the received working counter."""
+        self.send_processdata()
+        return self.receive_processdata(timeout)
+
     def send_processdata_group(self, group: int = 0) -> int:
         if not self._open or self._io_map is None:
             raise RuntimeError("master is not open or PDO map is not configured")
