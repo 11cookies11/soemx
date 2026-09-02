@@ -248,6 +248,8 @@ cdef class Master:
     def config_init(self) -> int:
         if not self._open:
             raise RuntimeError("master is not open")
+        self._slave_config_funcs.clear()
+        self._slave_setup_funcs.clear()
         count = ecx_config_init(self._context)
         self._io_map = None
         self._mapped_size = 0
