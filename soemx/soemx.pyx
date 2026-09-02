@@ -57,6 +57,17 @@ cdef class Master:
         if self._context == NULL:
             raise MemoryError("unable to allocate SOEM context")
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+        return False
+
+    @property
+    def opened(self):
+        return bool(self._open)
+
     def __dealloc__(self):
         if self._context != NULL:
             if self._open:
