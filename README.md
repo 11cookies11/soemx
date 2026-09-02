@@ -56,4 +56,25 @@ and the test suite can be used without EtherCAT hardware or the packet runtime.
 Physical EtherCAT, PDO, mailbox and EoE behavior still requires a compatible
 network adapter and at least one EtherCAT slave.
 
+## Minimal EoE example
+
+```python
+import soemx
+
+for adapter in soemx.find_adapters():
+    print(adapter.name, adapter.desc)
+
+with soemx.open("YOUR_INTERFACE") as master:
+    if master.config_init() <= 0:
+        raise RuntimeError("no EtherCAT slaves found")
+    channel = master.slaves[0].eoe()
+    channel.set_ip(b"192.168.1.20", b"255.255.255.0", b"192.168.1.1")
+    ethernet_frame = b"replace with a complete Ethernet frame"
+    channel.send(ethernet_frame)
+    frame = channel.receive()
+```
+
+The example requires an EoE-capable slave and a WinPcap-compatible Npcap
+installation on Windows (or the Linux packet-capture development package).
+
 SOEM is included under `vendor/SOEM` for development and is licensed separately. See its `LICENSE.md`.
