@@ -164,6 +164,16 @@ cdef class Master:
     def opened(self):
         return bool(self._open)
 
+    @property
+    def context_initialized(self):
+        return self._context != NULL
+
+    def check_context_is_initialized(self):
+        """Raise when the native SOEM context is unavailable."""
+        if self._context == NULL:
+            raise RuntimeError("SOEM context is not initialized")
+        return True
+
     def __dealloc__(self):
         if self._context != NULL:
             if self._open:
