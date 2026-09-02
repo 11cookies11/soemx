@@ -1014,8 +1014,9 @@ cdef class Slave:
             raise RuntimeError("master is not open")
         if not 0 <= pdo_number <= 0xffff:
             raise ValueError("invalid PDO number")
-        if not isinstance(data, bytes) or not data:
-            raise TypeError("data must be non-empty bytes")
+        if not isinstance(data, (bytes, bytearray, memoryview)) or not data:
+            raise TypeError("data must be a non-empty bytes-like object")
+        data = bytes(data)
         cdef const char *data_ptr = data
         cdef int data_size = len(data)
         cdef uint16_t pdo = <uint16_t>pdo_number
@@ -1156,8 +1157,9 @@ cdef class Slave:
             subindex = subindex_or_data
         if not self._master._open:
             raise RuntimeError("master is not open")
-        if not isinstance(data, bytes) or not data:
-            raise TypeError("data must be non-empty bytes")
+        if not isinstance(data, (bytes, bytearray, memoryview)) or not data:
+            raise TypeError("data must be a non-empty bytes-like object")
+        data = bytes(data)
         if not 0 <= index <= 0xffff or not 0 <= subindex <= 0xff:
             raise ValueError("invalid SDO index or subindex")
         if timeout <= 0:
@@ -1209,8 +1211,9 @@ cdef class Slave:
             raise RuntimeError("master is not open")
         if not isinstance(filename, str) or not filename:
             raise ValueError("filename must be a non-empty string")
-        if not isinstance(data, bytes) or not data:
-            raise TypeError("data must be non-empty bytes")
+        if not isinstance(data, (bytes, bytearray, memoryview)) or not data:
+            raise TypeError("data must be a non-empty bytes-like object")
+        data = bytes(data)
         if password < 0 or password > 0xffffffff or timeout <= 0:
             raise ValueError("invalid password or timeout")
         name = filename.encode("utf-8")
@@ -1269,8 +1272,9 @@ cdef class Slave:
         """Write a raw SoE IDN value."""
         if not self._master._open:
             raise RuntimeError("master is not open")
-        if not isinstance(data, bytes) or not data:
-            raise TypeError("data must be non-empty bytes")
+        if not isinstance(data, (bytes, bytearray, memoryview)) or not data:
+            raise TypeError("data must be a non-empty bytes-like object")
+        data = bytes(data)
         if not 0 <= idn <= 0xffff or not 0 <= drive <= 0xff:
             raise ValueError("invalid IDN or drive number")
         if timeout <= 0:
