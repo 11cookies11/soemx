@@ -120,7 +120,7 @@ cdef extern from "soemx_native.h":
                             unsigned short address, void *buffer, int size, int timeout) noexcept nogil
     int soemx_write_register(ecx_contextt *context, unsigned short slave,
                              unsigned short address, const void *buffer, int size, int timeout) noexcept nogil
-    int soemx_amend_mailbox(ecx_contextt *context, unsigned short slave,
+    int soemx_amend_mailbox(ecx_contextt *context, unsigned short slave, int mailbox,
                             unsigned short start_address, unsigned short size) noexcept nogil
     int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                         unsigned short *index, unsigned char *subindex,
@@ -826,12 +826,22 @@ cdef class Slave:
 
     def amend_mbx(self, mailbox, start_address: int, size: int):
         """Override the configured mailbox address and size."""
-        if mailbox not in ("rx", "tx"):
-            raise ValueError("mailbox must be 'rx' or 'tx'")
+        if mailbox == "out":
+            sm_address = 0x0800
+            direction = 0
+        elif mailbox == "in":
+            sm_address = 0x0808
+            direction = 1
+        else:
+            raise AttributeError("mailbox must be 'out' or 'in'")
         if not 0 <= start_address <= 0xFFFF or not 1 <= size <= 0xFFFF:
             raise ValueError("invalid mailbox address or size")
+        sm = bytearray(self._master.read_register(self._index, sm_address, 8, 4000))
+        sm[0:4] = int(start_address).to_bytes(4, "little")
+        sm[4:6] = int(size).to_bytes(2, "little")
+        self._master.write_register(self._index, sm_address, bytes(sm), 4000)
         return bool(soemx_amend_mailbox(self._master._context, self._index,
-                                        start_address, size))
+                                        direction, start_address, size))
 
     def _watchdog_register(self, wd_type):
         if wd_type == "pdi":

@@ -55,7 +55,7 @@ int soemx_read_register(ecx_contextt *context, unsigned short slave,
                         unsigned short address, void *buffer, int size, int timeout);
 int soemx_write_register(ecx_contextt *context, unsigned short slave,
                          unsigned short address, const void *buffer, int size, int timeout);
-int soemx_amend_mailbox(ecx_contextt *context, unsigned short slave,
+int soemx_amend_mailbox(ecx_contextt *context, unsigned short slave, int mailbox,
                         unsigned short start_address, unsigned short size);
 int soemx_pop_error(ecx_contextt *context, unsigned short *slave,
                     unsigned short *index, unsigned char *subindex,
