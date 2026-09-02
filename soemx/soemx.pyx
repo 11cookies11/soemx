@@ -277,10 +277,10 @@ cdef class Master:
 
     @property
     def io_map(self):
-        """Return a copy of the current process-data IO map."""
+        """Return the mutable process-data IO map buffer."""
         if self._io_map is None:
             raise RuntimeError("PDO map has not been configured")
-        return bytes(self._io_map)
+        return self._io_map
 
     def write_io_map(self, data: bytes, offset: int = 0):
         if self._io_map is None:
