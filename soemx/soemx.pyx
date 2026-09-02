@@ -142,6 +142,7 @@ cdef class Master:
     cdef ecx_redportt *_redport
     cdef bint _open
     cdef object _io_map
+    cdef int _mapped_size
     cdef object _setup_func
     cdef dict _slave_config_funcs
     cdef dict _slave_setup_funcs
@@ -153,6 +154,7 @@ cdef class Master:
         self._context = soemx_context_create()
         self._redport = soemx_redport_create()
         self._setup_func = None
+        self._mapped_size = 0
         self._slave_config_funcs = {}
         self._slave_setup_funcs = {}
         self._emergency_callbacks = []
@@ -265,7 +267,9 @@ cdef class Master:
                 setup_callback(Slave(self, index))
         self._io_map = bytearray(size)
         cdef char *io_ptr = self._io_map
-        return ecx_config_map_group(self._context, <void *>io_ptr, <unsigned char>group)
+        self._mapped_size = ecx_config_map_group(self._context, <void *>io_ptr,
+                                                 <unsigned char>group)
+        return self._mapped_size
 
     def config_overlap_map(self, size: int = 65536, group: int = 0) -> int:
         """Configure an overlapped PDO map, matching PySOEM's API."""
@@ -283,7 +287,14 @@ cdef class Master:
         self._io_map = bytearray(size)
         soemx_set_overlapped(self._context, 1)
         cdef char *io_ptr = self._io_map
-        return ecx_config_map_group(self._context, <void *>io_ptr, <unsigned char>group)
+        self._mapped_size = ecx_config_map_group(self._context, <void *>io_ptr,
+                                                 <unsigned char>group)
+        return self._mapped_size
+
+    @property
+    def mapped_size(self):
+        """Number of bytes actually assigned by the last PDO mapping."""
+        return self._mapped_size
 
     def set_packed_map(self, enabled: bool = True):
         """Enable or disable byte-packed PDO mapping before config_map()."""
