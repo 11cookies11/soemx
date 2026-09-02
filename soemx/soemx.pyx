@@ -474,6 +474,31 @@ cdef class Slave:
     def alias_address(self):
         return soemx_slave_alias_address(self._master._context, self._index)
 
+    # PySOEM-compatible field names.
+    @property
+    def eep_man(self):
+        return self.manufacturer
+
+    @property
+    def eep_id(self):
+        return self.id
+
+    @property
+    def eep_rev(self):
+        return self.revision
+
+    @property
+    def eep_ser(self):
+        return self.serial
+
+    @property
+    def configadr(self):
+        return self.config_address
+
+    @property
+    def aliasadr(self):
+        return self.alias_address
+
     @property
     def state(self):
         return soemx_slave_state(self._master._context, self._index)
@@ -497,6 +522,14 @@ cdef class Slave:
     @property
     def input_bits(self):
         return soemx_slave_ibits(self._master._context, self._index)
+
+    @property
+    def obits(self):
+        return self.output_bits
+
+    @property
+    def ibits(self):
+        return self.input_bits
 
     @property
     def outputs(self):
