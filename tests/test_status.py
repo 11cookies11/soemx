@@ -19,7 +19,9 @@ def test_common_pysoem_constants():
 
 def test_emergency_notification_fields():
     notification = Emergency(1, 0x1000, 0x01, 2, 3, 4)
+    assert notification.slave_pos == 1
     assert notification.slave == 1
     assert notification.error_code == 0x1000
+    assert notification.error_reg == 0x01
     assert notification.error_register == 0x01
     assert (notification.b1, notification.w1, notification.w2) == (2, 3, 4)
