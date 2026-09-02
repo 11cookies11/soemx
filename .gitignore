@@ -10,6 +10,7 @@ build/
 dist/
 .venv/
 .pytest_cache/
+.tmp_pysoem/
 
 # Local SOEM build output
 vendor/SOEM/build/
