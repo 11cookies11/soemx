@@ -12,6 +12,8 @@ cdef extern from "soem/soem.h":
     void ecx_close(ecx_contextt *context)
     int ecx_config_init(ecx_contextt *context)
     int ecx_config_map_group(ecx_contextt *context, void *pIOmap, unsigned char group)
+    int ecx_recover_slave(ecx_contextt *context, uint16_t slave, int timeout)
+    int ecx_reconfig_slave(ecx_contextt *context, uint16_t slave, int timeout)
     uint32_t ecx_readeeprom(ecx_contextt *context, uint16_t slave, uint16_t address, int timeout)
     int ecx_writeeeprom(ecx_contextt *context, uint16_t slave, uint16_t address,
                         uint16_t data, int timeout)
@@ -141,6 +143,26 @@ cdef class Master:
         if not self._open:
             raise RuntimeError("master is not open")
         return ecx_config_init(self._context)
+
+    def recover_slave(self, slave: int, timeout: int = 5_000_000) -> int:
+        """Recover a slave that has lost communication."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count:
+            raise IndexError("slave index out of range")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        return ecx_recover_slave(self._context, <uint16_t>slave, timeout)
+
+    def reconfig_slave(self, slave: int, timeout: int = 5_000_000) -> int:
+        """Reconfigure a slave that is no longer in its expected state."""
+        if not self._open:
+            raise RuntimeError("master is not open")
+        if slave < 1 or slave > self.slave_count:
+            raise IndexError("slave index out of range")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        return ecx_reconfig_slave(self._context, <uint16_t>slave, timeout)
 
     def config_map(self, size: int = 65536, group: int = 0) -> int:
         """Map slave PDOs into an IO buffer and return mapped byte count."""
