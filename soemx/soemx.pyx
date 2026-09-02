@@ -214,11 +214,15 @@ cdef class Master:
         if self._open:
             ecx_close(self._context)
             self._open = False
+        self._io_map = None
+        self._mapped_size = 0
 
     def config_init(self) -> int:
         if not self._open:
             raise RuntimeError("master is not open")
         count = ecx_config_init(self._context)
+        self._io_map = None
+        self._mapped_size = 0
         return count
 
     @property
@@ -265,6 +269,7 @@ cdef class Master:
                 callback(Slave(self, index))
             if setup_callback is not None:
                 setup_callback(Slave(self, index))
+        soemx_set_overlapped(self._context, 0)
         self._io_map = bytearray(size)
         cdef char *io_ptr = self._io_map
         self._mapped_size = ecx_config_map_group(self._context, <void *>io_ptr,
