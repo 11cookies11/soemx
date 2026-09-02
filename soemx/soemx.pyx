@@ -145,6 +145,8 @@ cdef class Master:
     cdef ecx_redportt *_redport
     cdef bint _open
     cdef object _io_map
+    cdef object _interface
+    cdef object _interface2
     cdef int _mapped_size
     cdef object _setup_func
     cdef dict _slave_config_funcs
@@ -158,6 +160,8 @@ cdef class Master:
         self._redport = soemx_redport_create()
         self._setup_func = None
         self._mapped_size = 0
+        self._interface = None
+        self._interface2 = None
         self._slave_config_funcs = {}
         self._slave_setup_funcs = {}
         self._emergency_callbacks = []
@@ -180,6 +184,14 @@ cdef class Master:
     @property
     def is_open(self):
         return bool(self._open)
+
+    @property
+    def interface(self):
+        return self._interface
+
+    @property
+    def redundant_interface(self):
+        return self._interface2
 
     @property
     def context_initialized(self):
@@ -218,6 +230,8 @@ cdef class Master:
         if result <= 0:
             raise OSError(f"failed to open EtherCAT interface: {interface}")
         self._open = True
+        self._interface = interface
+        self._interface2 = interface2
 
     def close(self):
         if self._open:
@@ -227,6 +241,8 @@ cdef class Master:
         self._mapped_size = 0
         self._in_op = False
         self._do_check_state = False
+        self._interface = None
+        self._interface2 = None
 
     def config_init(self) -> int:
         if not self._open:
