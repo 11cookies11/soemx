@@ -5,6 +5,10 @@
 
 ecx_contextt *soemx_context_create(void);
 void soemx_context_destroy(ecx_contextt *context);
+ecx_redportt *soemx_redport_create(void);
+void soemx_redport_destroy(ecx_redportt *redport);
+int soemx_init_redundant(ecx_contextt *context, ecx_redportt *redport,
+                         const char *ifname, const char *ifname2);
 int soemx_slave_count(ecx_contextt *context);
 const char *soemx_slave_name(ecx_contextt *context, int slave);
 unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave);

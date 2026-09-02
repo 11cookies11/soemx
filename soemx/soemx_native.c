@@ -12,6 +12,22 @@ void soemx_context_destroy(ecx_contextt *context)
     free(context);
 }
 
+ecx_redportt *soemx_redport_create(void)
+{
+    return (ecx_redportt *)calloc(1, sizeof(ecx_redportt));
+}
+
+void soemx_redport_destroy(ecx_redportt *redport)
+{
+    free(redport);
+}
+
+int soemx_init_redundant(ecx_contextt *context, ecx_redportt *redport,
+                         const char *ifname, const char *ifname2)
+{
+    return ecx_init_redundant(context, redport, ifname, (char *)ifname2);
+}
+
 int soemx_slave_count(ecx_contextt *context) { return context ? context->slavecount : 0; }
 const char *soemx_slave_name(ecx_contextt *context, int slave) { return context->slavelist[slave].name; }
 unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_man; }

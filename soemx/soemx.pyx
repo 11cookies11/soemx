@@ -8,6 +8,8 @@ cdef extern from "soem/soem.h":
         ec_adaptert *next
     ctypedef struct ecx_contextt:
         pass
+    ctypedef struct ecx_redportt:
+        pass
     int ecx_init(ecx_contextt *context, const char *ifname)
     void ecx_close(ecx_contextt *context)
     int ecx_config_init(ecx_contextt *context)
@@ -67,6 +69,10 @@ cdef extern from "soem/soem.h":
 cdef extern from "soemx_native.h":
     ecx_contextt *soemx_context_create()
     void soemx_context_destroy(ecx_contextt *context)
+    ecx_redportt *soemx_redport_create()
+    void soemx_redport_destroy(ecx_redportt *redport)
+    int soemx_init_redundant(ecx_contextt *context, ecx_redportt *redport,
+                             const char *ifname, const char *ifname2)
     int soemx_slave_count(ecx_contextt *context)
     const char *soemx_slave_name(ecx_contextt *context, int slave)
     unsigned int soemx_slave_manufacturer(ecx_contextt *context, int slave)
@@ -113,14 +119,16 @@ cdef extern from "soemx_native.h":
 
 cdef class Master:
     cdef ecx_contextt *_context
+    cdef ecx_redportt *_redport
     cdef bint _open
     cdef object _io_map
     cdef object _setup_func
 
     def __cinit__(self):
         self._context = soemx_context_create()
+        self._redport = soemx_redport_create()
         self._setup_func = None
-        if self._context == NULL:
+        if self._context == NULL or self._redport == NULL:
             raise MemoryError("unable to allocate SOEM context")
 
     def __enter__(self):
@@ -140,12 +148,23 @@ cdef class Master:
                 ecx_close(self._context)
             soemx_context_destroy(self._context)
             self._context = NULL
+        if self._redport != NULL:
+            soemx_redport_destroy(self._redport)
+            self._redport = NULL
 
-    def open(self, interface: str):
+    def open(self, interface: str, interface2=None):
         if self._open:
             raise RuntimeError("master is already open")
         encoded = interface.encode("utf-8")
-        if ecx_init(self._context, encoded) <= 0:
+        if interface2 is None:
+            result = ecx_init(self._context, encoded)
+        else:
+            if not isinstance(interface2, str) or not interface2:
+                raise ValueError("interface2 must be a non-empty string")
+            encoded2 = interface2.encode("utf-8")
+            result = soemx_init_redundant(self._context, self._redport,
+                                          encoded, encoded2)
+        if result <= 0:
             raise OSError(f"failed to open EtherCAT interface: {interface}")
         self._open = True
 
