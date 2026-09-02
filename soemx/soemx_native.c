@@ -34,3 +34,24 @@ int soemx_mailbox_receive(ecx_contextt *context, unsigned short slave,
     ecx_dropmbx(context, mailbox);
     return result;
 }
+
+int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
+                        unsigned short *index, unsigned short *datatype,
+                        unsigned char *object_code, unsigned char *max_sub,
+                        char *name, int name_capacity)
+{
+    ec_ODlistt od;
+    int count;
+    if (!context || !index || !datatype || !object_code || !max_sub || !name) return -1;
+    memset(&od, 0, sizeof(od));
+    count = ecx_readODlist(context, slave, &od);
+    if (count <= 0) return count;
+    if (entry < 0) return count;
+    if (entry >= count || entry >= EC_MAXODLIST) return -1;
+    *index = od.Index[entry];
+    *datatype = od.DataType[entry];
+    *object_code = od.ObjectCode[entry];
+    *max_sub = od.MaxSub[entry];
+    strncpy_s(name, (size_t)name_capacity, od.Name[entry], _TRUNCATE);
+    return count;
+}

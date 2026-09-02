@@ -59,6 +59,10 @@ cdef extern from "soemx_native.h":
     long long soemx_dc_time(ecx_contextt *context)
     int soemx_mailbox_receive(ecx_contextt *context, unsigned short slave,
                               int timeout, void *buffer, int capacity) noexcept nogil
+    int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
+                            unsigned short *index, unsigned short *datatype,
+                            unsigned char *object_code, unsigned char *max_sub,
+                            char *name, int name_capacity)
 
 
 cdef class Master:
@@ -365,6 +369,30 @@ cdef class Slave:
         if result <= 0:
             raise RuntimeError("SDO read failed")
         return bytes(buffer[:actual_size])
+
+    def sdo_info(self):
+        """Read the slave object dictionary as a list of dictionaries."""
+        if not self._master._open:
+            raise RuntimeError("master is not open")
+        cdef unsigned short index = 0
+        cdef unsigned short datatype = 0
+        cdef unsigned char object_code = 0
+        cdef unsigned char max_sub = 0
+        cdef char name[41]
+        cdef int count = soemx_read_od_entry(self._master._context, self._index, -1,
+                                             &index, &datatype, &object_code,
+                                             &max_sub, name, 41)
+        if count <= 0:
+            raise RuntimeError("SDO info read failed")
+        result = []
+        for entry in range(count):
+            soemx_read_od_entry(self._master._context, self._index, entry,
+                                &index, &datatype, &object_code, &max_sub,
+                                name, 41)
+            result.append({"index": index, "data_type": datatype,
+                           "object_code": object_code, "max_subindex": max_sub,
+                           "name": bytes(name).split(b"\0", 1)[0]})
+        return result
 
     def sdo_write(self, index: int, data: bytes, subindex: int = 0,
                   complete_access: bool = False, timeout: int = 20_000) -> int:
