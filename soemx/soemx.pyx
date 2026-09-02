@@ -1077,6 +1077,22 @@ cdef class Slave:
             return memoryview(bytearray())
         return <unsigned char[:size]>pointer
 
+    @property
+    def output(self):
+        return self.outputs
+
+    @property
+    def input(self):
+        return self.inputs
+
+    @property
+    def output_size(self):
+        return (self.output_bits + 7) // 8
+
+    @property
+    def input_size(self):
+        return (self.input_bits + 7) // 8
+
     def eoe(self, port: int = 0):
         return self._master.eoe(self._index, port)
 
