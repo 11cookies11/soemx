@@ -5,6 +5,7 @@ from soemx import (INIT_STATE, PREOP_STATE, SAFEOP_STATE, OP_STATE,
                    al_status_code_to_string as exported_status)
 from soemx.errors import (SoemxError, SdoError, SdoInfoError, MailboxError,
                           PacketError, ConfigMapError, EepromError)
+from soemx.adapters import Adapter, _decode
 
 
 def test_known_al_status():
@@ -55,3 +56,9 @@ def test_error_objects_preserve_diagnostic_fields():
     assert ConfigMapError([sdo]).error_list == [sdo]
     assert SdoInfoError("info").message == "info"
     assert EepromError("eeprom").message == "eeprom"
+
+
+def test_adapter_object_has_text_attributes():
+    adapter = Adapter("eth0", "Ethernet adapter")
+    assert (adapter.name, adapter.desc) == ("eth0", "Ethernet adapter")
+    assert _decode(b"eth0\0ignored") == "eth0"

@@ -2,6 +2,7 @@ from libc.stdint cimport uint16_t, uint32_t, uint64_t, int32_t
 from libc.string cimport strlen
 import warnings
 from .errors import Emergency
+from .adapters import Adapter, _decode
 
 cdef extern from "soem/soem.h":
     ctypedef struct ec_adaptert:
@@ -1580,13 +1581,13 @@ cdef class Slave:
 
 
 def find_adapters():
-    """Return available network adapters as ``[{name, desc}]`` dictionaries."""
+    """Return available network adapters as :class:`Adapter` objects."""
     cdef ec_adaptert *node = ec_find_adapters()
     cdef ec_adaptert *current = node
     result = []
     while current != NULL:
-        result.append({"name": bytes(current.name).split(b"\0", 1)[0],
-                       "desc": bytes(current.desc).split(b"\0", 1)[0]})
+        result.append(Adapter(_decode(bytes(current.name)),
+                              _decode(bytes(current.desc))))
         current = current.next
     if node != NULL:
         ec_free_adapters(node)
