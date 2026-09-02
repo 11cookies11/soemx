@@ -135,6 +135,7 @@ cdef class Master:
     cdef object _setup_func
     cdef dict _slave_config_funcs
     cdef dict _slave_setup_funcs
+    cdef list _emergency_callbacks
     cdef bint _in_op
     cdef bint _do_check_state
 
@@ -144,6 +145,7 @@ cdef class Master:
         self._setup_func = None
         self._slave_config_funcs = {}
         self._slave_setup_funcs = {}
+        self._emergency_callbacks = []
         self._in_op = False
         self._do_check_state = False
         if self._context == NULL or self._redport == NULL:
@@ -511,8 +513,18 @@ cdef class Master:
         if not soemx_pop_error(self._context, &slave, &index, &subindex,
                                &error_type, &abort_code):
             return None
-        return {"slave": slave, "index": index, "subindex": subindex,
-                "type": error_type, "abort_code": abort_code}
+        error = {"slave": slave, "index": index, "subindex": subindex,
+                 "type": error_type, "abort_code": abort_code}
+        if error_type == 1:
+            for callback in self._emergency_callbacks:
+                callback(error)
+        return error
+
+    def add_emergency_callback(self, callback):
+        """Register a callback invoked with queued emergency error mappings."""
+        if not callable(callback):
+            raise TypeError("callback must be callable")
+        self._emergency_callbacks.append(callback)
 
     def errors(self):
         """Return all currently queued SOEM errors in FIFO order."""
