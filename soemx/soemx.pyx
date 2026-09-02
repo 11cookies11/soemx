@@ -696,12 +696,15 @@ cdef class Master:
         """Discard all queued SOEM errors and return the number removed."""
         count = 0
         callbacks = self._emergency_callbacks
+        slave_callbacks = self._slave_emergency_callbacks
         self._emergency_callbacks = []
+        self._slave_emergency_callbacks = {}
         try:
             while self.pop_error() is not None:
                 count += 1
         finally:
             self._emergency_callbacks = callbacks
+            self._slave_emergency_callbacks = slave_callbacks
         return count
 
     def add_emergency_callback(self, callback):
