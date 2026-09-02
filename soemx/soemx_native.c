@@ -19,6 +19,8 @@ unsigned int soemx_slave_id(ecx_contextt *context, int slave) { return context->
 unsigned short soemx_slave_state(ecx_contextt *context, int slave) { return context->slavelist[slave].state; }
 unsigned int soemx_slave_obits(ecx_contextt *context, int slave) { return context->slavelist[slave].Obits; }
 unsigned int soemx_slave_ibits(ecx_contextt *context, int slave) { return context->slavelist[slave].Ibits; }
+unsigned char *soemx_slave_outputs(ecx_contextt *context, int slave) { return context->slavelist[slave].outputs; }
+unsigned char *soemx_slave_inputs(ecx_contextt *context, int slave) { return context->slavelist[slave].inputs; }
 long long soemx_dc_time(ecx_contextt *context) { return context ? (long long)context->DCtime : 0; }
 
 int soemx_mailbox_receive(ecx_contextt *context, unsigned short slave,

@@ -65,6 +65,8 @@ cdef extern from "soemx_native.h":
     unsigned short soemx_slave_state(ecx_contextt *context, int slave)
     unsigned int soemx_slave_obits(ecx_contextt *context, int slave)
     unsigned int soemx_slave_ibits(ecx_contextt *context, int slave)
+    unsigned char *soemx_slave_outputs(ecx_contextt *context, int slave)
+    unsigned char *soemx_slave_inputs(ecx_contextt *context, int slave)
     long long soemx_dc_time(ecx_contextt *context)
     int soemx_mailbox_receive(ecx_contextt *context, unsigned short slave,
                               int timeout, void *buffer, int capacity) noexcept nogil
@@ -451,6 +453,26 @@ cdef class Slave:
     @property
     def input_bits(self):
         return soemx_slave_ibits(self._master._context, self._index)
+
+    @property
+    def outputs(self):
+        """Writable memoryview onto this slave's mapped output bytes."""
+        cdef unsigned int bits = soemx_slave_obits(self._master._context, self._index)
+        cdef unsigned int size = (bits + 7) // 8
+        cdef unsigned char *pointer = soemx_slave_outputs(self._master._context, self._index)
+        if size == 0 or pointer == NULL:
+            return memoryview(bytearray())
+        return <unsigned char[:size]>pointer
+
+    @property
+    def inputs(self):
+        """Read-only-by-convention memoryview onto mapped input bytes."""
+        cdef unsigned int bits = soemx_slave_ibits(self._master._context, self._index)
+        cdef unsigned int size = (bits + 7) // 8
+        cdef unsigned char *pointer = soemx_slave_inputs(self._master._context, self._index)
+        if size == 0 or pointer == NULL:
+            return memoryview(bytearray())
+        return <unsigned char[:size]>pointer
 
     def eoe(self, port: int = 0):
         return self._master.eoe(self._index, port)
