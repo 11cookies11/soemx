@@ -671,6 +671,18 @@ cdef class Slave:
         return bool(soemx_slave_is_lost(self._master._context, self._index))
 
     @property
+    def al_status(self):
+        return self.al_status_code
+
+    @property
+    def islost(self):
+        return self.is_lost
+
+    @property
+    def hasdc(self):
+        return self.has_dc
+
+    @property
     def output_bits(self):
         return soemx_slave_obits(self._master._context, self._index)
 
