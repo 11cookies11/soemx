@@ -1,6 +1,9 @@
 from soemx.status import al_status_code_to_string
 from soemx import ECT_COEDET_SDO, ECT_REG_SM0, ECT_REG_SM1
 from soemx import Emergency
+from soemx import (INIT_STATE, PREOP_STATE, SAFEOP_STATE, OP_STATE,
+                   al_status_code_to_string as exported_status)
+from soemx.errors import SoemxError, SdoError
 
 
 def test_known_al_status():
@@ -25,3 +28,18 @@ def test_emergency_notification_fields():
     assert notification.error_reg == 0x01
     assert notification.error_register == 0x01
     assert (notification.b1, notification.w1, notification.w2) == (2, 3, 4)
+
+
+def test_package_exports_protocol_state_constants():
+    assert (INIT_STATE, PREOP_STATE, SAFEOP_STATE, OP_STATE) == (1, 2, 4, 8)
+    assert exported_status(0x0000) == "No error"
+
+
+def test_operation_errors_share_soemx_base():
+    assert issubclass(SdoError, SoemxError)
+
+
+def test_emergency_string_contains_payload():
+    text = str(Emergency(2, 0x1234, 0x05, 0x06, 0x0708, 0x090A))
+    assert "Slave 2" in text
+    assert "06,08,07,0a,09" in text
