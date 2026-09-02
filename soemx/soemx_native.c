@@ -40,6 +40,10 @@ unsigned int soemx_slave_revision(ecx_contextt *context, int slave) { return con
 unsigned int soemx_slave_serial(ecx_contextt *context, int slave) { return context->slavelist[slave].eep_ser; }
 unsigned short soemx_slave_config_address(ecx_contextt *context, int slave) { return context->slavelist[slave].configadr; }
 unsigned short soemx_slave_alias_address(ecx_contextt *context, int slave) { return context->slavelist[slave].aliasadr; }
+unsigned short soemx_slave_mbx_out_address(ecx_contextt *context, int slave) { return context->slavelist[slave].mbx_wo; }
+unsigned short soemx_slave_mbx_out_size(ecx_contextt *context, int slave) { return context->slavelist[slave].mbx_l; }
+unsigned short soemx_slave_mbx_in_address(ecx_contextt *context, int slave) { return context->slavelist[slave].mbx_ro; }
+unsigned short soemx_slave_mbx_in_size(ecx_contextt *context, int slave) { return context->slavelist[slave].mbx_rl; }
 unsigned short soemx_slave_state(ecx_contextt *context, int slave) { return context->slavelist[slave].state; }
 unsigned short soemx_slave_al_status(ecx_contextt *context, int slave) { return context->slavelist[slave].ALstatuscode; }
 int soemx_slave_has_dc(ecx_contextt *context, int slave) { return context->slavelist[slave].hasdc ? 1 : 0; }

@@ -90,6 +90,10 @@ cdef extern from "soemx_native.h":
     unsigned int soemx_slave_serial(ecx_contextt *context, int slave)
     unsigned short soemx_slave_config_address(ecx_contextt *context, int slave)
     unsigned short soemx_slave_alias_address(ecx_contextt *context, int slave)
+    unsigned short soemx_slave_mbx_out_address(ecx_contextt *context, int slave)
+    unsigned short soemx_slave_mbx_out_size(ecx_contextt *context, int slave)
+    unsigned short soemx_slave_mbx_in_address(ecx_contextt *context, int slave)
+    unsigned short soemx_slave_mbx_in_size(ecx_contextt *context, int slave)
     unsigned short soemx_slave_state(ecx_contextt *context, int slave)
     unsigned short soemx_slave_al_status(ecx_contextt *context, int slave)
     int soemx_slave_has_dc(ecx_contextt *context, int slave)
@@ -952,6 +956,22 @@ cdef class Slave:
     @property
     def alias_address(self):
         return soemx_slave_alias_address(self._master._context, self._index)
+
+    @property
+    def mailbox_out_address(self):
+        return soemx_slave_mbx_out_address(self._master._context, self._index)
+
+    @property
+    def mailbox_out_size(self):
+        return soemx_slave_mbx_out_size(self._master._context, self._index)
+
+    @property
+    def mailbox_in_address(self):
+        return soemx_slave_mbx_in_address(self._master._context, self._index)
+
+    @property
+    def mailbox_in_size(self):
+        return soemx_slave_mbx_in_size(self._master._context, self._index)
 
     # PySOEM-compatible field names.
     @property
