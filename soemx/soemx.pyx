@@ -1144,13 +1144,18 @@ cdef class Slave:
         return result
 
     def sdo_write(self, index: int, subindex_or_data, data=None,
-                  ca: bool = False, timeout: int = 20_000, **kwargs) -> int:
+                  ca: bool = False, timeout: int = 20_000,
+                  subindex=None, **kwargs) -> int:
         """Write raw bytes to an SDO and return SOEM's result code."""
         if "complete_access" in kwargs:
             ca = kwargs.pop("complete_access")
         if kwargs:
             raise TypeError("unexpected keyword argument: %s" % next(iter(kwargs)))
-        if data is None:
+        if subindex is not None:
+            if data is not None:
+                raise TypeError("subindex specified twice")
+            data = subindex_or_data
+        elif data is None:
             data = subindex_or_data
             subindex = 0
         else:
