@@ -1,5 +1,6 @@
 from libc.stdint cimport uint16_t, uint32_t, int32_t
 from libc.string cimport strlen
+import warnings
 
 cdef extern from "soem/soem.h":
     ctypedef struct ec_adaptert:
@@ -812,6 +813,49 @@ cdef class Slave:
         return self._master.dc_sync01(self._index, sync0_cycle_time,
                                       sync1_cycle_time, active,
                                       sync0_shift_time)
+
+    def _watchdog_register(self, wd_type):
+        if wd_type == "pdi":
+            return 0x0410
+        if wd_type == "processdata":
+            return 0x0420
+        raise AttributeError("watchdog type must be 'pdi' or 'processdata'")
+
+    def _get_watchdog_divider_ns(self):
+        divider = int.from_bytes(
+            self._master.read_register(self._index, 0x0400, 2, 4000),
+            "little")
+        return 40 * (divider + 2)
+
+    def get_max_watchdog_time(self):
+        """Return the maximum configurable watchdog time in milliseconds."""
+        return 0xFFFF * self._get_watchdog_divider_ns() / 1_000_000.0
+
+    def get_watchdog(self, wd_type):
+        """Read a PDI or process-data watchdog time in milliseconds."""
+        register = self._watchdog_register(wd_type)
+        value = int.from_bytes(
+            self._master.read_register(self._index, register, 2, 4000),
+            "little")
+        return value * self._get_watchdog_divider_ns() / 1_000_000.0
+
+    def set_watchdog(self, wd_type, wd_time_ms):
+        """Set a PDI or process-data watchdog time in milliseconds."""
+        register = self._watchdog_register(wd_type)
+        requested = float(wd_time_ms)
+        if requested < 0:
+            raise AttributeError("watchdog time must not be negative")
+        maximum = self.get_max_watchdog_time()
+        if requested > maximum:
+            raise AttributeError("watchdog time exceeds the slave limit")
+        divider_ns = self._get_watchdog_divider_ns()
+        register_value = int((requested * 1_000_000.0) / divider_ns)
+        self._master.write_register(self._index, register,
+                                    register_value.to_bytes(2, "little"),
+                                    4000)
+        actual = register_value * divider_ns / 1_000_000.0
+        if actual != requested:
+            warnings.warn("watchdog time rounded to the nearest register value")
 
     @property
     def output_bits(self):
