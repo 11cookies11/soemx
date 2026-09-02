@@ -108,9 +108,11 @@ cdef class Master:
     cdef ecx_contextt *_context
     cdef bint _open
     cdef object _io_map
+    cdef object _setup_func
 
     def __cinit__(self):
         self._context = soemx_context_create()
+        self._setup_func = None
         if self._context == NULL:
             raise MemoryError("unable to allocate SOEM context")
 
@@ -148,7 +150,22 @@ cdef class Master:
     def config_init(self) -> int:
         if not self._open:
             raise RuntimeError("master is not open")
-        return ecx_config_init(self._context)
+        count = ecx_config_init(self._context)
+        if count > 0 and self._setup_func is not None:
+            for index in range(1, count + 1):
+                self._setup_func(Slave(self, index))
+        return count
+
+    @property
+    def setup_func(self):
+        """Callback invoked with each discovered Slave after config_init()."""
+        return self._setup_func
+
+    @setup_func.setter
+    def setup_func(self, callback):
+        if callback is not None and not callable(callback):
+            raise TypeError("setup_func must be callable or None")
+        self._setup_func = callback
 
     def recover_slave(self, slave: int, timeout: int = 5_000_000) -> int:
         """Recover a slave that has lost communication."""
