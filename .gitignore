@@ -1,0 +1,21 @@
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.cpp
+soemx/soemx.c
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+
+# Local SOEM build output
+vendor/SOEM/build/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
