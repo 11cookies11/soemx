@@ -2,6 +2,10 @@ from libc.stdint cimport uint16_t, uint32_t, int32_t
 from libc.string cimport strlen
 
 cdef extern from "soem/soem.h":
+    ctypedef struct ec_adaptert:
+        char name[128]
+        char desc[128]
+        ec_adaptert *next
     ctypedef struct ecx_contextt:
         pass
     int ecx_init(ecx_contextt *context, const char *ifname)
@@ -14,6 +18,8 @@ cdef extern from "soem/soem.h":
     unsigned char ecx_configdc(ecx_contextt *context)
     void ecx_dcsync0(ecx_contextt *context, uint16_t slave, unsigned char act,
                      uint32_t cycltime, int32_t cyclshift)
+    ec_adaptert *ec_find_adapters()
+    void ec_free_adapters(ec_adaptert *adapter)
     int ecx_readstate(ecx_contextt *context)
     int ecx_writestate(ecx_contextt *context, uint16_t slave)
     uint16_t ecx_statecheck(ecx_contextt *context, uint16_t slave, uint16_t reqstate, int timeout)
@@ -408,3 +414,17 @@ cdef class Slave:
         if result <= 0:
             raise RuntimeError("FoE write failed")
         return result
+
+
+def find_adapters():
+    """Return available network adapters as ``[{name, desc}]`` dictionaries."""
+    cdef ec_adaptert *node = ec_find_adapters()
+    cdef ec_adaptert *current = node
+    result = []
+    while current != NULL:
+        result.append({"name": bytes(current.name).split(b"\0", 1)[0],
+                       "desc": bytes(current.desc).split(b"\0", 1)[0]})
+        current = current.next
+    if node != NULL:
+        ec_free_adapters(node)
+    return result
