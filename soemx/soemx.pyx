@@ -94,8 +94,6 @@ cdef extern from "soemx_native.h":
     unsigned short soemx_slave_mbx_out_size(ecx_contextt *context, int slave)
     unsigned short soemx_slave_mbx_in_address(ecx_contextt *context, int slave)
     unsigned short soemx_slave_mbx_in_size(ecx_contextt *context, int slave)
-    int soemx_slave_amend_mbx(ecx_contextt *context, int slave, int mailbox,
-                              unsigned short address, unsigned short size)
     unsigned short soemx_slave_state(ecx_contextt *context, int slave)
     unsigned short soemx_slave_al_status(ecx_contextt *context, int slave)
     int soemx_slave_has_dc(ecx_contextt *context, int slave)
@@ -974,20 +972,6 @@ cdef class Slave:
     @property
     def mailbox_in_size(self):
         return soemx_slave_mbx_in_size(self._master._context, self._index)
-
-    def amend_mbx(self, mailbox: str, start_address: int, size: int):
-        """Change a mailbox address and size while the slave is in INIT."""
-        if mailbox not in ("out", "in"):
-            raise ValueError("mailbox must be 'out' or 'in'")
-        if not 0 <= start_address <= 0xffff:
-            raise ValueError("start_address must be between 0 and 65535")
-        if not 0 <= size <= 0xffff:
-            raise ValueError("size must be between 0 and 65535")
-        if not soemx_slave_amend_mbx(
-            self._master._context, self._index, 0 if mailbox == "out" else 1,
-            <unsigned short>start_address, <unsigned short>size
-        ):
-            raise ValueError("invalid mailbox")
 
     # PySOEM-compatible field names.
     @property
