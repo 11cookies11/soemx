@@ -198,6 +198,8 @@ cdef class Master:
     def open(self, interface: str, interface2=None):
         if self._open:
             raise RuntimeError("master is already open")
+        if not isinstance(interface, str) or not interface:
+            raise ValueError("interface must be a non-empty string")
         encoded = interface.encode("utf-8")
         if interface2 is None:
             result = ecx_init(self._context, encoded)
