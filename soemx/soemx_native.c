@@ -111,7 +111,13 @@ int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
     *datatype = od.DataType[entry];
     *object_code = od.ObjectCode[entry];
     *max_sub = od.MaxSub[entry];
-    strncpy_s(name, (size_t)name_capacity, od.Name[entry], _TRUNCATE);
+    if (name_capacity <= 0) return -1;
+    {
+        size_t length = strlen(od.Name[entry]);
+        if (length >= (size_t)name_capacity) length = (size_t)name_capacity - 1;
+        memcpy(name, od.Name[entry], length);
+        name[length] = '\0';
+    }
     return count;
 }
 
@@ -133,7 +139,13 @@ int soemx_read_oe_entry(ecx_contextt *context, unsigned short slave, int object,
     *datatype = oe.DataType[entry];
     *bit_length = oe.BitLength[entry];
     *access = oe.ObjAccess[entry];
-    strncpy_s(name, (size_t)name_capacity, oe.Name[entry], _TRUNCATE);
+    if (name_capacity <= 0) return -1;
+    {
+        size_t length = strlen(oe.Name[entry]);
+        if (length >= (size_t)name_capacity) length = (size_t)name_capacity - 1;
+        memcpy(name, oe.Name[entry], length);
+        name[length] = '\0';
+    }
     return oe.Entries;
 }
 
