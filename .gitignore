@@ -8,6 +8,7 @@ soemx/soemx.c
 *.egg-info/
 build/
 dist/
+soemx-*/
 .venv/
 .pytest_cache/
 .tmp_pysoem/

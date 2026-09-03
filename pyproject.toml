@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "soemx"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Cython bindings for SOEM with EoE support"
 readme = "README.md"
 requires-python = ">=3.9"
