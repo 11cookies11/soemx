@@ -26,6 +26,9 @@ jobs:
       - name: Install build dependencies
         run: python -m pip install --upgrade pip build
 
+      - name: Install Linux native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+
       - name: Generate SOEM build configuration
         run: cmake -S vendor/SOEM -B vendor/SOEM/build -DEC_DEBUG=OFF
 
