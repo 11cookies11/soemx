@@ -21,7 +21,7 @@ The project is intended to provide a complete, Python-friendly API for EtherCAT 
 python -m pip install soemx
 ```
 
-当前 PyPI 发布的是开发版本。没有对应平台 wheel 时，pip 会从源码构建扩展，
+当前 PyPI 提供 `0.1.0` 正式版本。没有对应平台 wheel 时，pip 会从源码构建扩展，
 因此 Linux 需要 C 编译器、Cython 和 `libpcap-dev`；Windows 需要 Visual Studio
 C++ 构建工具以及运行时使用的 Npcap（WinPcap API 兼容模式）。
 
