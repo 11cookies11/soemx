@@ -1,8 +1,29 @@
 # soemx
 
+[![CI](https://github.com/11cookies11/soemx/actions/workflows/ci.yml/badge.svg)](https://github.com/11cookies11/soemx/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/soemx.svg)](https://pypi.org/project/soemx/)
+[![Python](https://img.shields.io/pypi/pyversions/soemx.svg)](https://pypi.org/project/soemx/)
+
+`soemx` 是一个面向个人项目和工业自动化实验的 SOEM Python 封装，使用
+Cython 将 SOEM 2.x 的 EtherCAT Master 能力暴露给 Python，并额外提供 EoE
+（Ethernet over EtherCAT）接口。
+
+项目仍在积极开发中，API 可能发生变化。没有 EtherCAT 硬件时，可以运行构建
+和单元测试；真实的 PDO、Mailbox 和 EoE 通信需要兼容的网卡和从站设备。
+
 Python bindings for the [Simple Open EtherCAT Master (SOEM)](https://github.com/OpenEtherCATsociety/SOEM), implemented with Cython.
 
 The project is intended to provide a complete, Python-friendly API for EtherCAT master operations, including EoE (Ethernet over EtherCAT), which is not currently exposed by PySOEM.
+
+## Installation
+
+```powershell
+python -m pip install soemx
+```
+
+当前 PyPI 发布的是开发版本。没有对应平台 wheel 时，pip 会从源码构建扩展，
+因此 Linux 需要 C 编译器、Cython 和 `libpcap-dev`；Windows 需要 Visual Studio
+C++ 构建工具以及运行时使用的 Npcap（WinPcap API 兼容模式）。
 
 ## Current API
 
