@@ -28,6 +28,9 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libpcap-dev
 
+      - name: Generate SOEM build configuration
+        run: cmake -S vendor/SOEM -B vendor/SOEM/build -DEC_DEBUG=OFF
+
       - name: Build extension
         run: python setup.py build_ext --inplace
 
