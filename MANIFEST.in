@@ -5,6 +5,7 @@ recursive-include vendor/SOEM/include *.h *.in
 recursive-include vendor/SOEM/src *.c *.h
 recursive-include vendor/SOEM/osal/linux *.c *.h
 recursive-include vendor/SOEM/osal/win32 *.c *.h
+include vendor/SOEM/osal/osal.h
 recursive-include vendor/SOEM/oshw/linux *.c *.h
 recursive-include vendor/SOEM/oshw/win32 *.c *.h
 recursive-include vendor/SOEM/build/include *.h
