@@ -2,7 +2,7 @@ import soemx
 
 
 def test_release_version_and_public_exports():
-    assert soemx.__version__ == "0.1.0"
+    assert soemx.__version__ == "0.1.1"
     expected = {
         "Master", "find_adapters", "open", "Adapter", "SoemxError",
         "SdoError", "MailboxError", "PacketError", "Emergency",

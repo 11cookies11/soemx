@@ -28,7 +28,7 @@ ECT_COEDET_PDOCONFIG = 0x08
 ECT_COEDET_UPLOAD = 0x10
 ECT_COEDET_SDOCA = 0x20
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 def _load_native():
