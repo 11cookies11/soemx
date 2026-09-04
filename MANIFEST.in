@@ -8,4 +8,5 @@ recursive-include vendor/SOEM/osal/win32 *.c *.h
 include vendor/SOEM/osal/osal.h
 recursive-include vendor/SOEM/oshw/linux *.c *.h
 recursive-include vendor/SOEM/oshw/win32 *.c *.h
+recursive-include vendor/SOEM/oshw/win32/wpcap/Lib *.lib *.a
 recursive-include vendor/SOEM/build/include *.h
