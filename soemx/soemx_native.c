@@ -107,6 +107,7 @@ int soemx_read_od_entry(ecx_contextt *context, unsigned short slave, int entry,
     if (count <= 0) return count;
     if (entry < 0) return count;
     if (entry >= count || entry >= EC_MAXODLIST) return -1;
+    (void)ecx_readODdescription(context, (uint16_t)entry, &od);
     *index = od.Index[entry];
     *datatype = od.DataType[entry];
     *object_code = od.ObjectCode[entry];
@@ -132,8 +133,18 @@ int soemx_read_oe_entry(ecx_contextt *context, unsigned short slave, int object,
     if (!context || !value_info || !datatype || !bit_length || !access || !name) return -1;
     memset(&od, 0, sizeof(od));
     memset(&oe, 0, sizeof(oe));
-    if (ecx_readODlist(context, slave, &od) <= 0 || object < 0 || object >= od.Entries) return -1;
-    result = ecx_readOEsingle(context, (uint16)object, (uint8)entry, &od, &oe);
+    if (ecx_readODlist(context, slave, &od) <= 0 || object < 0) return -1;
+    {
+        int item = -1;
+        int i;
+        for (i = 0; i < od.Entries; ++i) {
+            if (od.Index[i] == (uint16_t)object) { item = i; break; }
+        }
+        if (item < 0 && object < od.Entries) item = object;
+        if (item < 0 || item >= EC_MAXODLIST) return -1;
+        result = ecx_readOEsingle(context, (uint16_t)item, (uint8_t)entry,
+                                  &od, &oe);
+    }
     if (result <= 0 || entry < 0 || entry >= oe.Entries) return result;
     *value_info = oe.ValueInfo[entry];
     *datatype = oe.DataType[entry];
